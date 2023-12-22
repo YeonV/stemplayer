@@ -13,6 +13,7 @@ export default function App() {
   const [expanded, setExpanded] = useState<string | false>(false)
   const [isPlaying, setIsPlaying] = useState({} as Record<string, boolean>)
   const [played, setPlayed] = useState(0)
+  const isProd = process.env.NODE_ENV === 'production' && process.env.PROD_ENV === 'github'
 
   const handleFiles = (files: any, web?: boolean) => {
     for (const file of files) {
@@ -101,7 +102,7 @@ export default function App() {
 
   return (
     <Box alignItems={'center'} display={'flex'} flexDirection={'column'}>
-      <Image src={'/banner.png'} width={550} height={286} alt='banner' style={{ marginBottom: '3rem' }} />
+      <Image src={isProd ? '/stemplayer' : '' + '/banner.png'} width={550} height={286} alt='banner' style={{ marginBottom: '3rem' }} />
       <AddFiles inputRef={inputRef} handleFiles={handleFiles} onFileChange={onFileChange} />
       <Box>
         {Object.entries(tracksObject).map(([song, tracks]) => (
@@ -154,7 +155,7 @@ export default function App() {
             <GitHub sx={{ mr: 1 }} />
             Open&nbsp;Source&nbsp;|&nbsp;by&nbsp;YeonV
           </a>
-          <Image src={'/yz.png'} width={32} height={32} alt='logo' />
+          <Image src={isProd ? '/stemplayer' : '' + '/yz.png'} width={32} height={32} alt='logo' />
 
           <a
             href='https://github.com/YeonV/stemplayer/releases/latest'
