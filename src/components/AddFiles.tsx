@@ -20,14 +20,14 @@ export default function AddFiles({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
 
   return (
-    <Stack direction={'row'} width={600}>
+    <Stack direction={'row'} width={600} justifyContent={'space-between'}>
       <Button
         startIcon={<CreateNewFolder />}
         size='large'
         variant='outlined'
         color='inherit'
         onClick={() => inputRef.current?.click()}
-        sx={{ mb: 2, width: 300 }}
+        sx={{ mb: 2, width: 292 }}
       >
         Select Folder
       </Button>
@@ -36,12 +36,11 @@ export default function AddFiles({
         <div
           style={{
             height: '70px',
-            marginLeft: '16px',
             marginBottom: '16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 300,
+            width: 292,
             border: `${isDragActive ? '3' : '2'}px dashed ${isDragActive ? theme.palette.primary.main : '#eee'}`,
             color: isDragActive ? theme.palette.primary.main : '#eee',
             borderRadius: '5px'

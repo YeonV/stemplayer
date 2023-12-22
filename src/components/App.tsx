@@ -100,7 +100,7 @@ export default function App() {
   }, [tracksObject, played])
 
   return (
-    <Box>
+    <Box alignItems={'center'} display={'flex'} flexDirection={'column'}>
       <Image src={'/banner.png'} width={550} height={286} alt='banner' style={{ marginBottom: '3rem' }} />
       <AddFiles inputRef={inputRef} handleFiles={handleFiles} onFileChange={onFileChange} />
       <Box>
