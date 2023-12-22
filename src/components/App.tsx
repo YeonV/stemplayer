@@ -3,6 +3,8 @@ import { Box } from '@mui/material'
 import { ITrack, TrackType } from '@/components/utils'
 import AddFiles from './AddFiles'
 import Song from './Song'
+import Image from 'next/image'
+import { Download, GitHub } from '@mui/icons-material'
 
 export default function App() {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -99,6 +101,7 @@ export default function App() {
 
   return (
     <Box>
+      <Image src={'/banner.png'} width={550} height={286} alt='banner' style={{ marginBottom: '3rem' }} />
       <AddFiles inputRef={inputRef} handleFiles={handleFiles} onFileChange={onFileChange} />
       <Box>
         {Object.entries(tracksObject).map(([song, tracks]) => (
@@ -114,6 +117,60 @@ export default function App() {
           />
         ))}
       </Box>
+      <footer
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 50,
+          textAlign: 'center',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-around',
+          background: '#111'
+        }}
+      >
+        <div
+          style={{
+            width: '100%',
+            maxWidth: 600,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: '#111'
+          }}
+        >
+          <a
+            href='https://github.com/YeonV/stemplayer'
+            target='_blank'
+            rel='noopener noreferrer'
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <GitHub sx={{ mr: 1 }} />
+            Open&nbsp;Source&nbsp;|&nbsp;by&nbsp;YeonV
+          </a>
+          <Image src={'/yz.png'} width={32} height={32} alt='logo' />
+
+          <a
+            href='https://github.com/YeonV/stemplayer/releases/latest'
+            target='_blank'
+            rel='noopener noreferrer'
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            Download Desktop App
+            <Download sx={{ ml: 1 }} />
+          </a>
+        </div>
+      </footer>
     </Box>
   )
 }
