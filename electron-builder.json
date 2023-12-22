@@ -1,0 +1,70 @@
+{
+    "publish": {
+        "provider": "generic",
+        "url": "https://github.com/YeonV/stemplayer"
+    },
+    "productName": "stemplayer",
+    "copyright": "Copyright (c) 2023 YeonV",
+    "appId": "io.github.yeonv.stemplayer",
+    "protocols": [
+        {
+            "name": "BladeMP",
+            "schemes": [
+                "stemplayer"
+            ]
+        }
+    ],
+    "mac": {
+        "target": [
+            "dmg",
+            "zip"
+        ],
+        "icon": "resources/icon.png",
+        "artifactName": "stemplayer-v${version}--${os}-${arch}.${ext}"
+    },
+    "dmg": {
+        "background": "src/assets/DMG_BG.jpg",
+        "contents": [
+            {
+                "x": 135,
+                "y": 165
+            },
+            {
+                "x": 407,
+                "y": 165,
+                "type": "link",
+                "path": "/Applications"
+            }
+        ],
+        "iconSize": 120,
+        "iconTextSize": 14,
+        "window": {
+            "height": 380
+        }
+    },
+    "win": {
+        "target": [
+            "zip",
+            "nsis",
+            "portable"
+        ],
+        "icon": "public/favicon.ico",
+        "artifactName": "stemplayer-v${version}--${os}.${ext}"
+    },
+    "portable": {
+        "useZip": true,
+        "artifactName": "stemplayer-v${version}--${os}-portable.${ext}"
+    },
+    "nsis": {
+        "useZip": true,
+        "installerIcon": "public/favicon.ico",
+        "artifactName": "stemplayer-v${version}--${os}-setup.${ext}"
+    },
+    "linux": {
+        "target": [
+            "AppImage",
+            "zip"
+        ],
+        "artifactName": "stemplayer-v${version}--${os}.${ext}"
+    }
+}
