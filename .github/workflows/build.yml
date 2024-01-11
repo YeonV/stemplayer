@@ -147,7 +147,7 @@ jobs:
         for os in "${os_list[@]}"; do
           matrix_json+="\"$os\","
         done
-        matrix_json=${matrix_json%?} // remove trailing comma
+        matrix_json=${matrix_json%?}
         matrix_json+="]}"
 
         echo "$matrix_json" > matrix.json
