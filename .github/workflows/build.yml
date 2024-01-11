@@ -38,6 +38,7 @@ jobs:
     runs-on: [ubuntu-latest]
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      version: ${{ steps.package-version.outputs.current-version }}
     steps:
     - name: Get Messages    
       if: github.event.inputs.release == 'Yes'
@@ -183,10 +184,6 @@ jobs:
           value=`cat release_url/release_url.txt`
           echo "upload_url=$value" >> $GITHUB_OUTPUT
 
-      - name: get-npm-version
-        id: package-version
-        uses: martinbeentjes/npm-get-version-action@master
-
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -222,16 +219,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          asset_path: stemplayer-v${{ steps.package-version.outputs.current-version}}--win.zip
-          asset_name: stemplayer-v${{ steps.package-version.outputs.current-version}}--win.zip
+          asset_path: stemplayer-v${{ needs.createrelease.outputs.version }}--win.zip
+          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--win.zip
           asset_content_type: application/zip
 
       - name: Upload Core Win To Workflow
         if: startsWith(runner.os, 'Windows') && github.event.inputs.release == 'No' && github.event.inputs.windows == 'true'
         uses: actions/upload-artifact@v3
         with:
-            name: stemplayer-v${{ steps.package-version.outputs.current-version}}--win.zip
-            path: stemplayer-v${{ steps.package-version.outputs.current-version}}--win.zip
+            name: stemplayer-v${{ needs.createrelease.outputs.version }}--win.zip
+            path: stemplayer-v${{ needs.createrelease.outputs.version }}--win.zip
 
       - name: Upload Core Win Portable To Release
         if: startsWith(runner.os, 'Windows') &&  github.event.inputs.release == 'Yes' && github.event.inputs.windows == 'true'
@@ -240,16 +237,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          asset_path: dist\stemplayer-v${{ steps.package-version.outputs.current-version}}--win-portable.exe
-          asset_name: stemplayer-v${{ steps.package-version.outputs.current-version}}--win-portable.exe
+          asset_path: dist\stemplayer-v${{ needs.createrelease.outputs.version }}--win-portable.exe
+          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--win-portable.exe
           asset_content_type: application/vnd.microsoft.portable-executable
           
       - name: Upload Core Win Portable To Worflow
         if: startsWith(runner.os, 'Windows') &&  github.event.inputs.release == 'No' && github.event.inputs.windows == 'true'
         uses: actions/upload-artifact@v3
         with:
-            name: stemplayer-v${{ steps.package-version.outputs.current-version}}--win-portable.exe
-            path: dist\stemplayer-v${{ steps.package-version.outputs.current-version}}--win-portable.exe
+            name: stemplayer-v${{ needs.createrelease.outputs.version }}--win-portable.exe
+            path: dist\stemplayer-v${{ needs.createrelease.outputs.version }}--win-portable.exe
 
       - name: Upload Core Win setup To Release
         if: startsWith(runner.os, 'Windows') &&  github.event.inputs.release == 'Yes' && github.event.inputs.windows == 'true'
@@ -258,16 +255,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          asset_path: dist\stemplayer-v${{ steps.package-version.outputs.current-version}}--win-setup.exe
-          asset_name: stemplayer-v${{ steps.package-version.outputs.current-version}}--win-setup.exe
+          asset_path: dist\stemplayer-v${{ needs.createrelease.outputs.version }}--win-setup.exe
+          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--win-setup.exe
           asset_content_type: application/vnd.microsoft.portable-executable
           
       - name: Upload Core Win setup To Worflow
         if: startsWith(runner.os, 'Windows') &&  github.event.inputs.release == 'No' && github.event.inputs.windows == 'true'
         uses: actions/upload-artifact@v3
         with:
-            name: stemplayer-v${{ steps.package-version.outputs.current-version}}--win-setup.exe
-            path: dist\stemplayer-v${{ steps.package-version.outputs.current-version}}--win-setup.exe
+            name: stemplayer-v${{ needs.createrelease.outputs.version }}--win-setup.exe
+            path: dist\stemplayer-v${{ needs.createrelease.outputs.version }}--win-setup.exe
       
       - name: Upload Core Osx To Release        
         if: startsWith(matrix.OS, 'macos') && github.event.inputs.release == 'Yes' && github.event.inputs.macos == 'true'
@@ -276,15 +273,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          asset_path: dist\stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-x64.zip
-          asset_name: stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-x64.zip
+          asset_path: dist\stemplayer-v${{ needs.createrelease.outputs.version }}--osx-x64.zip
+          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--osx-x64.zip
           asset_content_type: application/zip
       - name: Upload Core Osx to Workflow
         if: startsWith(matrix.OS, 'macos') &&  github.event.inputs.release == 'No' && github.event.inputs.macos == 'true'
         uses: actions/upload-artifact@v3
         with:
-            name: stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-x64.zip
-            path: dist/stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-x64.zip
+            name: stemplayer-v${{ needs.createrelease.outputs.version }}--osx-x64.zip
+            path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--osx-x64.zip
 
       - name: Upload Core Osx-arm64 To Release        
         if: startsWith(matrix.OS, 'osx-arm64') && github.event.inputs.release == 'Yes' && github.event.inputs.osxarm64 == 'true'
@@ -293,20 +290,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          asset_path: dist/stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-arm64.zip
-          asset_name: stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-arm64.zip
+          asset_path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--osx-arm64.zip
+          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--osx-arm64.zip
           asset_content_type: application/zip
 
       - name: Upload Core Osx-arm64 to Workflow
         if: startsWith(matrix.OS, 'osx-arm64') &&  github.event.inputs.release == 'No' && github.event.inputs.osxarm64 == 'true'
         uses: actions/upload-artifact@v3
         with:
-            name: stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-arm64.zip
-            path: dist/stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-arm64.zip      
+            name: stemplayer-v${{ needs.createrelease.outputs.version }}--osx-arm64.zip
+            path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--osx-arm64.zip      
 
 
 
-      - name: Upload Core Linux To Release
+      - name: Upload Linux AppImage To Release
         if: startsWith(matrix.os, 'ubuntu') &&  github.event.inputs.release == 'Yes' && github.event.inputs.ubuntu == 'true'
         continue-on-error: true
         uses: YeonV/upload-release-asset@v1
@@ -314,16 +311,35 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          asset_path: dist/stemplayer-v${{ steps.package-version.outputs.current-version}}--linux-x64.tar.gz
-          asset_name: stemplayer-v${{ steps.package-version.outputs.current-version}}--linux-x64.tar.gz
-          asset_content_type: application/gzip
+          asset_path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--linux.AppImage
+          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--linux.AppImage
+          asset_content_type: application/octet-stream
           
-      - name: Upload Core Linux To Worflow       
+      - name: Upload Linux AppImage To Worflow       
         if: startsWith(matrix.os, 'ubuntu') &&  github.event.inputs.release == 'No' && github.event.inputs.ubuntu == 'true'
         uses: actions/upload-artifact@v3
         with:
-            name: stemplayer-v${{ steps.package-version.outputs.current-version}}--linux-x64.tar.gz
-            path: dist/stemplayer-v${{ steps.package-version.outputs.current-version}}--linux-x64.tar.gz
+            name: stemplayer-v${{ needs.createrelease.outputs.version }}--linux.AppImage
+            path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--linux.AppImage
+
+      - name: Upload Linux zip To Release
+        if: startsWith(matrix.os, 'ubuntu') &&  github.event.inputs.release == 'Yes' && github.event.inputs.ubuntu == 'true'
+        continue-on-error: true
+        uses: YeonV/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+          asset_path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--linux.zip
+          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--linux.zip
+          asset_content_type: application/gzip
+          
+      - name: Upload Linux zip To Worflow       
+        if: startsWith(matrix.os, 'ubuntu') &&  github.event.inputs.release == 'No' && github.event.inputs.ubuntu == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+            name: stemplayer-v${{ needs.createrelease.outputs.version }}--linux.zip
+            path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--linux.zip
 
           
 
