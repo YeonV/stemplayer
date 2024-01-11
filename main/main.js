@@ -1,7 +1,10 @@
-const { app, BrowserWindow, protocol, net, session, dialog } = require('electron')
+const { app, BrowserWindow, protocol, net, session, dialog, ipcRenderer } = require('electron')
 const serve = require('electron-serve')
 const path = require('path')
-const url = require('url')
+let win
+const stripTrailingSlash = (str) => {
+  return str.endsWith('/') ? str.slice(0, -1) : str
+}
 
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
@@ -18,9 +21,9 @@ const appServe = app.isPackaged
   : null
 
 const createWindow = () => {
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 800,
-    height: 600,
+    height: 800,
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
@@ -58,12 +61,14 @@ if (!gotTheLock) {
 } else {
   app.on('second-instance', (event, commandLine, workingDirectory) => {
     // Someone tried to run a second instance, we should focus our window.
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore()
-      mainWindow.focus()
+    if (win) {
+      if (win.isMinimized()) win.restore()
+      win.focus()
     }
     // the commandLine is array of strings in which last element is deep link url
-    dialog.showErrorBox('Welcome Back', `You arrived from: ${commandLine.pop()}`)
+    const filePath = stripTrailingSlash(commandLine.pop().slice('stemplayer://'.length))
+    win.webContents.send('protocol', filePath)
+    // dialog.showErrorBox('Welcome Back', `Got Message: ${filePath}`)
   })
 
   // Create mainWindow, load the rest of the app, etc...
@@ -75,14 +80,14 @@ if (!gotTheLock) {
 app.on('ready', () => {
   // const partition = 'persist:example'
   // const ses = session.fromPartition(partition)
+  console.log('YZ', process.env.npm_lifecycle_event)
   protocol.handle('stemplayer', (request) => {
-    console.log(request)
-    const parsedUrl = url.parse(request.url)
-    const filePath = decodeURIComponent(parsedUrl.pathname)
-    return dialog.showMessageBox({ message: filePath })
-
-    // const filePath = request.url.slice('stemplayer://'.length)
+    // const parsedUrl = url.parse(request.url)
+    // const filePath = decodeURIComponent(parsedUrl.pathname)
     // return dialog.showMessageBox({ message: filePath })
+    const filePath = stripTrailingSlash(request.url.slice('stemplayer://'.length))
+    return win.webContents.send('protocol', filePath)
+    // dialog.showMessageBox({ message: filePath })
     // return dialog.showErrorBox(`stemplayer ${filePath}`)
   })
   if (!app.isDefaultProtocolClient('stemplayer')) {
@@ -93,7 +98,7 @@ app.on('ready', () => {
   app.removeAsDefaultProtocolClient('stemplayer')
 
   // If we are running a non-packaged version of the app && on windows
-  if (process.env.NODE_ENV === 'development' && process.platform === 'win32') {
+  if (!app.isPackaged && process.platform === 'win32') {
     // Set the path of electron.exe and your app.
     // These two additional parameters are only available on windows.
     app.setAsDefaultProtocolClient('stemplayer', process.execPath, [path.resolve(process.argv[1])])

@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box } from '@mui/material'
+import { Box, Button } from '@mui/material'
 import { ITrack, TrackType } from '@/components/utils'
 import AddFiles from './AddFiles'
 import Song from './Song'
 import Image from 'next/image'
-import { Download, GitHub } from '@mui/icons-material'
-
+import { Download, GitHub, Message } from '@mui/icons-material'
+import MessageBar from './MessageBar'
+declare global {
+  interface Window {
+    electronAPI: any
+  }
+}
 export default function App() {
   const inputRef = useRef<HTMLInputElement>(null)
   const [trackPaths, setTrackPaths] = useState<string[]>([])
@@ -14,6 +19,21 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState({} as Record<string, boolean>)
   const [played, setPlayed] = useState(0)
   const isProd = process.env.NODE_ENV === 'production' && process.env.PROD_ENV === 'github'
+  const [message, setMessage] = useState('')
+  const [messageType, setMessageType] = useState<'success' | 'error' | 'warning' | 'info'>('success')
+  const [messageOpen, setMessageOpen] = useState(false)
+
+  const showMessage = (message: string, messageType: 'success' | 'error' | 'warning' | 'info' = 'success') => {
+    setMessage(message)
+    setMessageType(messageType)
+    setMessageOpen(true)
+    setTimeout(() => {
+      setMessageOpen(false)
+      setTimeout(() => {
+        setMessage('')
+      }, 60)
+    }, 2000 + (message.length || 0) * 60)
+  }
 
   const handleFiles = (files: any, web?: boolean) => {
     for (const file of files) {
@@ -100,6 +120,13 @@ export default function App() {
     setIsPlaying({ [anyTrackPlaying as any]: !!anyTrackPlaying })
   }, [tracksObject, played])
 
+  useEffect(() => {
+    window.electronAPI.on('protocol', (event: any, arg: any) => {
+      console.log(arg)
+      showMessage(arg)
+    })
+  }, [])
+
   return (
     <Box alignItems={'center'} display={'flex'} flexDirection={'column'}>
       <Image src={(isProd ? '/stemplayer' : '') + '/banner.png'} width={550} height={286} alt='banner' style={{ marginBottom: '3rem' }} />
@@ -118,6 +145,8 @@ export default function App() {
           />
         ))}
       </Box>
+      <Button onClick={() => showMessage('Hacked By Blade')}>Snackbar</Button>
+      <MessageBar message={message} messageType={messageType} isOpen={messageOpen} />
       <footer
         style={{
           position: 'fixed',
