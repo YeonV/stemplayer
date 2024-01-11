@@ -77,14 +77,12 @@ jobs:
         
     - uses: actions/checkout@v3      
       if: github.event.inputs.release == 'Yes'
-      with:
-        path: frontend        
+      with:   
         fetch-depth: 0
         
     - name: Get Changelog    
       if: github.event.inputs.release == 'Yes'
       run: |
-        cd frontend
         echo "
         ### Changes:
         <details><summary>Expand</summary>
@@ -145,11 +143,12 @@ jobs:
         for os in "${os_list[@]}"; do
           matrix_json+="\"$os\","
         done
-        matrix_json=${matrix_json%?} # remove trailing comma
-        matrix_json+="], \"python-version\": [\"3.12.x\"]}"
-        
+        matrix_json=${matrix_json%?} // remove trailing comma
+        matrix_json+="]}"
+
         echo "$matrix_json" > matrix.json
         echo "matrix=$(cat matrix.json)" >> $GITHUB_OUTPUT
+
 
         
   build:
@@ -266,22 +265,38 @@ jobs:
             name: stemplayer-v${{ needs.createrelease.outputs.version }}--win-setup.exe
             path: dist\stemplayer-v${{ needs.createrelease.outputs.version }}--win-setup.exe
       
-      - name: Upload Core Osx To Release        
+      - name: Upload Osx zip To Release        
         if: startsWith(matrix.OS, 'macos') && github.event.inputs.release == 'Yes' && github.event.inputs.macos == 'true'
         uses: YeonV/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          asset_path: dist\stemplayer-v${{ needs.createrelease.outputs.version }}--osx-x64.zip
-          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--osx-x64.zip
+          asset_path: dist\stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.zip
+          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.zip
           asset_content_type: application/zip
-      - name: Upload Core Osx to Workflow
+      - name: Upload Osx zip to Workflow
         if: startsWith(matrix.OS, 'macos') &&  github.event.inputs.release == 'No' && github.event.inputs.macos == 'true'
         uses: actions/upload-artifact@v3
         with:
-            name: stemplayer-v${{ needs.createrelease.outputs.version }}--osx-x64.zip
-            path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--osx-x64.zip
+            name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.zip
+            path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.zip
+      - name: Upload Osx dmg To Release        
+        if: startsWith(matrix.OS, 'macos') && github.event.inputs.release == 'Yes' && github.event.inputs.macos == 'true'
+        uses: YeonV/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+          asset_path: dist\stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.dmg
+          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.dmg
+          asset_content_type: application/octet-stream
+      - name: Upload Osx dmg to Workflow
+        if: startsWith(matrix.OS, 'macos') &&  github.event.inputs.release == 'No' && github.event.inputs.macos == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+            name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.dmg
+            path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.dmg
 
       - name: Upload Core Osx-arm64 To Release        
         if: startsWith(matrix.OS, 'osx-arm64') && github.event.inputs.release == 'Yes' && github.event.inputs.osxarm64 == 'true'
