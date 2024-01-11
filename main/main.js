@@ -1,6 +1,7 @@
-const { app, BrowserWindow, protocol, net, session } = require('electron')
+const { app, BrowserWindow, protocol, net, session, dialog } = require('electron')
 const serve = require('electron-serve')
 const path = require('path')
+const url = require('url')
 
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
@@ -75,12 +76,33 @@ app.on('ready', () => {
   // const partition = 'persist:example'
   // const ses = session.fromPartition(partition)
   protocol.handle('stemplayer', (request) => {
-    const filePath = request.url.slice('stemplayer://'.length)
-    return dialog.showErrorBox(`stemplayer ${filePath}`)
-  })
-  app.setAsDefaultProtocolClient('stemplayer')
+    console.log(request)
+    const parsedUrl = url.parse(request.url)
+    const filePath = decodeURIComponent(parsedUrl.pathname)
+    return dialog.showMessageBox({ message: filePath })
 
-  createWindow()
+    // const filePath = request.url.slice('stemplayer://'.length)
+    // return dialog.showMessageBox({ message: filePath })
+    // return dialog.showErrorBox(`stemplayer ${filePath}`)
+  })
+  if (!app.isDefaultProtocolClient('stemplayer')) {
+    app.setAsDefaultProtocolClient('stemplayer')
+  }
+
+  // remove so we can register each time as we run the app.
+  app.removeAsDefaultProtocolClient('stemplayer')
+
+  // If we are running a non-packaged version of the app && on windows
+  if (process.env.NODE_ENV === 'development' && process.platform === 'win32') {
+    // Set the path of electron.exe and your app.
+    // These two additional parameters are only available on windows.
+    app.setAsDefaultProtocolClient('stemplayer', process.execPath, [path.resolve(process.argv[1])])
+  } else {
+    app.setAsDefaultProtocolClient('stemplayer')
+  }
+  // app.setAsDefaultProtocolClient('stemplayer')
+
+  // createWindow()
 })
 
 app.on('window-all-closed', () => {

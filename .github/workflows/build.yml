@@ -1,0 +1,329 @@
+name: BuildPipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+       description: 'Create Release'
+       default: 'Yes'
+       required: false
+       type: choice
+       options:
+         - 'Yes'
+         - 'No'
+      macos:
+        description: 'MacOS (intel)'
+        default: true
+        required: false
+        type: boolean
+      osxarm64:
+        description: 'MacOS (m1/m2)'
+        default: false
+        required: false
+        type: boolean
+      ubuntu:
+        description: 'Ubuntu'
+        default: true
+        required: false
+        type: boolean
+      windows:
+        description: 'Windows'
+        default: true
+        required: false
+        type: boolean
+jobs:
+
+  createrelease:
+    name: ${{ github.event.inputs.release == 'Yes' && 'Create Release' || 'Prepare Matrix' }}
+    runs-on: [ubuntu-latest]
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+    - name: Get Messages    
+      if: github.event.inputs.release == 'Yes'
+      run: |
+        echo "## New StemRoller binaries available:
+
+        ---
+
+        ## ⚠️ These builds are not signed  (read this please):
+
+        <details><summary>Mac-Users:</summary>
+
+        #### Infos:
+        Reports as damaged, because of unsiged.
+        To fix it open Terminal and type in the following (with a SPACE at the end):
+        
+        <code>sudo xattr -cr </code>
+        
+        Then drag'n'drop the LedFx.app File into the terminal and hit enter -> it should ask for sudo password
+
+        Now you can open the App normally, give microphone and network permission, and you can even drag it into your applications.
+        Maybe at some point we might buy an apple dev-license for 99€/year, then the voodoo would not be needed anymore.
+
+        </details>
+
+
+        <details><summary>Win-Users:</summary>
+
+        #### Infos:
+        Reports as unsave, because of unsiged.
+
+        Maybe at some point we might buy a microsoft dev-license
+
+        </details>
+        " >> ./messages.md
+        
+    - uses: actions/checkout@v3      
+      if: github.event.inputs.release == 'Yes'
+      with:
+        path: frontend        
+        fetch-depth: 0
+        
+    - name: Get Changelog    
+      if: github.event.inputs.release == 'Yes'
+      run: |
+        cd frontend
+        echo "
+        ### Changes:
+        <details><summary>Expand</summary>
+        
+        " >> ../messages.md
+        git log --pretty=format:"+ %s [![by](https://img.shields.io/badge/by-$(echo %an)-blue.svg?logo=github&logoColor=white)](https://github.com/LedFx/LedFx/commit/%h)" $(git describe --tags --abbrev=0 @^)..@ | grep -v -E '(cleanup)' | awk '{ sub(/\[\[!\]\]/, ""); msg = substr($0, 1, index($0, "[!") - 1); if (length(msg) >= 5 && !seen[msg]++) { print $0 } }' | awk '{ while (match($0, /https:\/\/img\.shields\.io\/badge\/by-[^"]*-blue\.svg\?logo=github&logoColor=white/)) { url = substr($0, RSTART, RLENGTH); gsub(" ", "_", url); gsub("-", "_", url); gsub("by_", "by-", url); gsub("_blue", "-blue", url); printf "%s%s", substr($0, 1, RSTART - 1), url; $0 = substr($0, RSTART + RLENGTH) } gsub(" ", "_", $0); print }' >> ../messages.md
+        echo "
+        </details>
+        
+        " >> ../messages.md
+        cat ../messages.md
+    - name: get-npm-version
+      id: package-version
+      uses: martinbeentjes/npm-get-version-action@master
+    - name: Create Release
+      if: github.event.inputs.release == 'Yes'
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.package-version.outputs.current-version}}
+        release_name: Release v${{ steps.package-version.outputs.current-version}}
+        body_path: ./messages.md
+        draft: false
+        prerelease: true
+    - name: Output Release URL File
+      if: github.event.inputs.release == 'Yes'
+      run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
+    - name: Save Release URL File for publish
+      if: github.event.inputs.release == 'Yes'
+      uses: actions/upload-artifact@v3
+      with:
+        name: release_url
+        path: release_url.txt
+    - name: Check Inputs and Prepare Matrix
+      id: set-matrix
+      run: |
+        echo windows: ${{ github.event.inputs.windows }}
+        echo ubuntu: ${{ github.event.inputs.ubuntu }}
+        echo macos: ${{ github.event.inputs.macos }}
+
+        os_list=()
+        if [ "${{ github.event.inputs.windows }}" = "true" ]; then
+          os_list+=('windows-latest')
+        fi
+        if [ "${{ github.event.inputs.ubuntu }}" = "true" ]; then
+          os_list+=('ubuntu-latest')
+        fi
+        if [ "${{ github.event.inputs.macos }}" = "true" ]; then
+          os_list+=('macos-latest')
+        fi
+        if [ "${{ github.event.inputs.osxarm64 }}" = "true" ]; then
+          os_list+=('osx-arm64')
+        fi
+
+        matrix_json="{\"os\": ["
+        for os in "${os_list[@]}"; do
+          matrix_json+="\"$os\","
+        done
+        matrix_json=${matrix_json%?} # remove trailing comma
+        matrix_json+="], \"python-version\": [\"3.12.x\"]}"
+        
+        echo "$matrix_json" > matrix.json
+        echo "matrix=$(cat matrix.json)" >> $GITHUB_OUTPUT
+
+        
+  build:
+    needs: createrelease
+    continue-on-error: true
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -x {0}
+    strategy:
+      fail-fast: false
+      matrix: ${{fromJson(needs.createrelease.outputs.matrix)}}
+    steps:
+      - name: Check out code from GitHub
+        uses: actions/checkout@v4
+
+
+      - name: Enable long paths for git on Windows
+        if: "startsWith(matrix.OS, 'win')"
+        run: git config --system core.longpaths true
+
+      - name: Load Release URL File from release job
+        if: github.event.inputs.release == 'Yes'
+        uses: actions/download-artifact@v1
+        with:
+          name: release_url
+      - name: Get Release File Name & Upload URL
+        if: github.event.inputs.release == 'Yes'
+        id: get_release_info
+        shell: bash
+        run: |
+          value=`cat release_url/release_url.txt`
+          echo "upload_url=$value" >> $GITHUB_OUTPUT
+
+      - name: get-npm-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@master
+
+      - name: Detect package manager
+        id: detect-package-manager
+        run: |
+          if [ -f "${{ github.workspace }}/yarn.lock" ]; then
+            echo "manager=yarn" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            echo "runner=yarn" >> $GITHUB_OUTPUT
+            exit 0
+          elif [ -f "${{ github.workspace }}/package.json" ]; then
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "command=ci" >> $GITHUB_OUTPUT
+            echo "runner=npx --no-install" >> $GITHUB_OUTPUT
+            exit 0
+          else
+            echo "Unable to determine package manager"
+            exit 1
+          fi
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: ${{ steps.detect-package-manager.outputs.manager }} 
+
+      - name: Install dependencies
+        run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+      - name: Build with Next.js
+        run: ${{ steps.detect-package-manager.outputs.runner }} build
+          
+      - name: Upload Core Win To Release
+        if: startsWith(runner.os, 'Windows') &&  github.event.inputs.release == 'Yes' && github.event.inputs.windows == 'true'
+        uses: YeonV/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+          asset_path: stemplayer-v${{ steps.package-version.outputs.current-version}}--win.zip
+          asset_name: stemplayer-v${{ steps.package-version.outputs.current-version}}--win.zip
+          asset_content_type: application/zip
+
+      - name: Upload Core Win To Workflow
+        if: startsWith(runner.os, 'Windows') && github.event.inputs.release == 'No' && github.event.inputs.windows == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+            name: stemplayer-v${{ steps.package-version.outputs.current-version}}--win.zip
+            path: stemplayer-v${{ steps.package-version.outputs.current-version}}--win.zip
+
+      - name: Upload Core Win Portable To Release
+        if: startsWith(runner.os, 'Windows') &&  github.event.inputs.release == 'Yes' && github.event.inputs.windows == 'true'
+        uses: YeonV/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+          asset_path: dist\stemplayer-v${{ steps.package-version.outputs.current-version}}--win-portable.exe
+          asset_name: stemplayer-v${{ steps.package-version.outputs.current-version}}--win-portable.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
+          
+      - name: Upload Core Win Portable To Worflow
+        if: startsWith(runner.os, 'Windows') &&  github.event.inputs.release == 'No' && github.event.inputs.windows == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+            name: stemplayer-v${{ steps.package-version.outputs.current-version}}--win-portable.exe
+            path: dist\stemplayer-v${{ steps.package-version.outputs.current-version}}--win-portable.exe
+
+      - name: Upload Core Win setup To Release
+        if: startsWith(runner.os, 'Windows') &&  github.event.inputs.release == 'Yes' && github.event.inputs.windows == 'true'
+        uses: YeonV/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+          asset_path: dist\stemplayer-v${{ steps.package-version.outputs.current-version}}--win-setup.exe
+          asset_name: stemplayer-v${{ steps.package-version.outputs.current-version}}--win-setup.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
+          
+      - name: Upload Core Win setup To Worflow
+        if: startsWith(runner.os, 'Windows') &&  github.event.inputs.release == 'No' && github.event.inputs.windows == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+            name: stemplayer-v${{ steps.package-version.outputs.current-version}}--win-setup.exe
+            path: dist\stemplayer-v${{ steps.package-version.outputs.current-version}}--win-setup.exe
+      
+      - name: Upload Core Osx To Release        
+        if: startsWith(matrix.OS, 'macos') && github.event.inputs.release == 'Yes' && github.event.inputs.macos == 'true'
+        uses: YeonV/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+          asset_path: dist\stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-x64.zip
+          asset_name: stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-x64.zip
+          asset_content_type: application/zip
+      - name: Upload Core Osx to Workflow
+        if: startsWith(matrix.OS, 'macos') &&  github.event.inputs.release == 'No' && github.event.inputs.macos == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+            name: stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-x64.zip
+            path: dist/stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-x64.zip
+
+      - name: Upload Core Osx-arm64 To Release        
+        if: startsWith(matrix.OS, 'osx-arm64') && github.event.inputs.release == 'Yes' && github.event.inputs.osxarm64 == 'true'
+        uses: YeonV/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+          asset_path: dist/stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-arm64.zip
+          asset_name: stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-arm64.zip
+          asset_content_type: application/zip
+
+      - name: Upload Core Osx-arm64 to Workflow
+        if: startsWith(matrix.OS, 'osx-arm64') &&  github.event.inputs.release == 'No' && github.event.inputs.osxarm64 == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+            name: stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-arm64.zip
+            path: dist/stemplayer-v${{ steps.package-version.outputs.current-version}}--osx-arm64.zip      
+
+
+
+      - name: Upload Core Linux To Release
+        if: startsWith(matrix.os, 'ubuntu') &&  github.event.inputs.release == 'Yes' && github.event.inputs.ubuntu == 'true'
+        continue-on-error: true
+        uses: YeonV/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+          asset_path: dist/stemplayer-v${{ steps.package-version.outputs.current-version}}--linux-x64.tar.gz
+          asset_name: stemplayer-v${{ steps.package-version.outputs.current-version}}--linux-x64.tar.gz
+          asset_content_type: application/gzip
+          
+      - name: Upload Core Linux To Worflow       
+        if: startsWith(matrix.os, 'ubuntu') &&  github.event.inputs.release == 'No' && github.event.inputs.ubuntu == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+            name: stemplayer-v${{ steps.package-version.outputs.current-version}}--linux-x64.tar.gz
+            path: dist/stemplayer-v${{ steps.package-version.outputs.current-version}}--linux-x64.tar.gz
+
+          
+
