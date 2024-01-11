@@ -127,6 +127,7 @@ jobs:
         echo windows: ${{ github.event.inputs.windows }}
         echo ubuntu: ${{ github.event.inputs.ubuntu }}
         echo macos: ${{ github.event.inputs.macos }}
+        echo version: ${{ steps.package-version.outputs.current-version}}
 
         os_list=()
         if [ "${{ github.event.inputs.windows }}" = "true" ]; then
@@ -214,25 +215,25 @@ jobs:
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} build
           
-      - name: Upload Core Win To Release
+      - name: Upload Win zip To Release
         if: startsWith(runner.os, 'Windows') &&  github.event.inputs.release == 'Yes' && github.event.inputs.windows == 'true'
         uses: YeonV/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          asset_path: stemplayer-v${{ needs.createrelease.outputs.version }}--win.zip
+          asset_path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--win.zip
           asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--win.zip
           asset_content_type: application/zip
 
-      - name: Upload Core Win To Workflow
+      - name: Upload Win zip To Workflow
         if: startsWith(runner.os, 'Windows') && github.event.inputs.release == 'No' && github.event.inputs.windows == 'true'
         uses: actions/upload-artifact@v3
         with:
             name: stemplayer-v${{ needs.createrelease.outputs.version }}--win.zip
-            path: stemplayer-v${{ needs.createrelease.outputs.version }}--win.zip
+            path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--win.zip
 
-      - name: Upload Core Win Portable To Release
+      - name: Upload Win Portable To Release
         if: startsWith(runner.os, 'Windows') &&  github.event.inputs.release == 'Yes' && github.event.inputs.windows == 'true'
         uses: YeonV/upload-release-asset@v1
         env:
@@ -243,14 +244,14 @@ jobs:
           asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--win-portable.exe
           asset_content_type: application/vnd.microsoft.portable-executable
           
-      - name: Upload Core Win Portable To Worflow
+      - name: Upload Win Portable To Worflow
         if: startsWith(runner.os, 'Windows') &&  github.event.inputs.release == 'No' && github.event.inputs.windows == 'true'
         uses: actions/upload-artifact@v3
         with:
             name: stemplayer-v${{ needs.createrelease.outputs.version }}--win-portable.exe
             path: dist\stemplayer-v${{ needs.createrelease.outputs.version }}--win-portable.exe
 
-      - name: Upload Core Win setup To Release
+      - name: Upload Win setup To Release
         if: startsWith(runner.os, 'Windows') &&  github.event.inputs.release == 'Yes' && github.event.inputs.windows == 'true'
         uses: YeonV/upload-release-asset@v1
         env:
@@ -261,7 +262,7 @@ jobs:
           asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--win-setup.exe
           asset_content_type: application/vnd.microsoft.portable-executable
           
-      - name: Upload Core Win setup To Worflow
+      - name: Upload Win setup To Worflow
         if: startsWith(runner.os, 'Windows') &&  github.event.inputs.release == 'No' && github.event.inputs.windows == 'true'
         uses: actions/upload-artifact@v3
         with:
@@ -301,25 +302,41 @@ jobs:
             name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.dmg
             path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.dmg
 
-      - name: Upload Core Osx-arm64 To Release        
+      - name: Upload Osx-arm64 zip To Release        
         if: startsWith(matrix.OS, 'osx-arm64') && github.event.inputs.release == 'Yes' && github.event.inputs.osxarm64 == 'true'
         uses: YeonV/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          asset_path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--osx-arm64.zip
-          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--osx-arm64.zip
+          asset_path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.zip
+          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.zip
           asset_content_type: application/zip
 
-      - name: Upload Core Osx-arm64 to Workflow
+      - name: Upload Osx-arm64 zip to Workflow
         if: startsWith(matrix.OS, 'osx-arm64') &&  github.event.inputs.release == 'No' && github.event.inputs.osxarm64 == 'true'
         uses: actions/upload-artifact@v3
         with:
-            name: stemplayer-v${{ needs.createrelease.outputs.version }}--osx-arm64.zip
-            path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--osx-arm64.zip      
+            name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.zip
+            path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.zip      
 
+      - name: Upload Osx-arm64 dmg To Release        
+        if: startsWith(matrix.OS, 'osx-arm64') && github.event.inputs.release == 'Yes' && github.event.inputs.osxarm64 == 'true'
+        uses: YeonV/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+          asset_path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.dmg
+          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.dmg
+          asset_content_type: application/octet-stream
 
+      - name: Upload Osx-arm64 dmg to Workflow
+        if: startsWith(matrix.OS, 'osx-arm64') &&  github.event.inputs.release == 'No' && github.event.inputs.osxarm64 == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+            name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.dmg
+            path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.dmg      
 
       - name: Upload Linux AppImage To Release
         if: startsWith(matrix.os, 'ubuntu') &&  github.event.inputs.release == 'Yes' && github.event.inputs.ubuntu == 'true'
