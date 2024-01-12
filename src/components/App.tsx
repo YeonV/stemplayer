@@ -90,6 +90,48 @@ export default function App() {
   }
 
   // const handleFiles = (files: any, web?: boolean) => {
+  //   if (files.length === 0) return
+  //   for (const file of files) {
+  //     setTrackPaths((p) => [...p, web ? file.webkitRelativePath : file.path !== '' ? file.path : file.name])
+  //     const reader = new FileReader()
+  //     reader.onload = function (eb: any) {
+  //       setTracksObject((o) => {
+  //         const path = web ? file.webkitRelativePath : file.path !== '' ? file.path : file.name
+  //         const isWindows = path.includes('\\')
+  //         const pathParts = path.split(isWindows ? '\\' : '/')
+
+  //         let song, type
+  //         if (pathParts.length === 3) {
+  //           // main folder -> subfolder (track) -> stems
+  //           song = pathParts[1]
+  //           type = pathParts[2]
+  //         } else {
+  //           // main folder (track) -> stems
+  //           song = pathParts[0]
+  //           type = pathParts[1]
+  //         }
+
+  //         const t = type.split('.')[0] as (typeof TrackType)[number]
+  //         const audio = new Audio(eb.target.result)
+  //         audio.volume = 0.5 // Set initial volume to 50%
+
+  //         return {
+  //           ...o,
+  //           [song]: {
+  //             ...(o[song] || []),
+  //             [t]: {
+  //               path: path,
+  //               audio: audio
+  //             }
+  //           }
+  //         }
+  //       })
+  //     }
+  //     reader.readAsDataURL(file)
+  //   }
+  // }
+
+  // const handleFiles = (files: any, web?: boolean) => {
   //   setIsLoading(true) // Start loading
 
   //   const loadPromises = Array.from(files).map(
@@ -190,6 +232,7 @@ export default function App() {
   }, [tracksObject, played])
 
   useEffect(() => {
+    if (!window.electronAPI) return
     window.electronAPI.on('message', (event: any, arg: any) => {
       showMessage(arg)
     })
