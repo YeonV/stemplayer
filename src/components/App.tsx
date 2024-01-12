@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box } from '@mui/material'
+import { Box, Button } from '@mui/material'
 import { ITrack, TrackType } from '@/components/utils'
 import AddFiles from './AddFiles'
 import Song from './Song'
@@ -7,6 +7,7 @@ import Image from 'next/image'
 import MessageBar from './MessageBar'
 import DetectedDialog from './DetectedDialog'
 import Footer from './Footer'
+import { PlayForWork } from '@mui/icons-material'
 const path = require('path')
 
 declare global {
@@ -26,6 +27,7 @@ export default function App() {
   const [messageType, setMessageType] = useState<'success' | 'error' | 'warning' | 'info'>('success')
   const [messageOpen, setMessageOpen] = useState(false)
   const [detectedDialogOpen, setDetectedDialogOpen] = useState(false)
+  const [detected, setDetected] = useState(false)
 
   const showMessage = (message: string, messageType: 'success' | 'error' | 'warning' | 'info' = 'success') => {
     setMessage(message)
@@ -141,6 +143,7 @@ export default function App() {
     })
     window.electronAPI.on('stemrollerDetected', () => {
       setDetectedDialogOpen(true)
+      setDetected(true)
     })
   }, [])
 
@@ -156,6 +159,12 @@ export default function App() {
         }}
       />
       <AddFiles inputRef={inputRef} handleFiles={handleFiles} onFileChange={onFileChange} />
+
+      {Object.keys(tracksObject).length === 0 && detected && (
+        <Button startIcon={<PlayForWork />} size='large' variant='contained' onClick={() => window.electronAPI.send('import-all')} sx={{ mb: 2 }}>
+          Load Stem Roller Folder
+        </Button>
+      )}
       <Box>
         {Object.entries(tracksObject).map(([song, tracks]) => (
           <Song

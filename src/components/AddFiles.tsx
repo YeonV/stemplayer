@@ -50,7 +50,6 @@ export default function AddFiles({
           Drop Folder
         </div>
       </div>
-
       {/* 
       //@ts-ignore */}
       <input ref={inputRef} onChange={onFileChange} type='file' accept='audio/*' id='input' webkitdirectory='true' mozdirectory='true' hidden />
