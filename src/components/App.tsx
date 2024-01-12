@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, Button } from '@mui/material'
+import { Box } from '@mui/material'
 import { ITrack, TrackType } from '@/components/utils'
 import AddFiles from './AddFiles'
 import Song from './Song'
 import Image from 'next/image'
-import { Download, GitHub, Message } from '@mui/icons-material'
 import MessageBar from './MessageBar'
 import DetectedDialog from './DetectedDialog'
+import Footer from './Footer'
 const path = require('path')
 
 declare global {
@@ -26,7 +26,6 @@ export default function App() {
   const [messageType, setMessageType] = useState<'success' | 'error' | 'warning' | 'info'>('success')
   const [messageOpen, setMessageOpen] = useState(false)
   const [detectedDialogOpen, setDetectedDialogOpen] = useState(false)
-  // const [isLoading, setIsLoading] = useState(false)
 
   const showMessage = (message: string, messageType: 'success' | 'error' | 'warning' | 'info' = 'success') => {
     setMessage(message)
@@ -41,7 +40,6 @@ export default function App() {
   }
 
   const handleFiles = (files: any, web?: boolean) => {
-    // setIsLoading(true)
     if (files.length === 0) return
     for (const file of files) {
       setTrackPaths((p) => [...p, web ? file.webkitRelativePath : file.path !== '' ? file.path : file.name])
@@ -49,11 +47,10 @@ export default function App() {
       reader.onload = function (eb: any) {
         setTracksObject((o) => {
           if (file.webkitRelativePath && file.webkitRelativePath !== '') {
-            // console.log(file.webkitRelativePath)
             const [base, song, type] = file.webkitRelativePath.split('/')
             const t = type.split('.')[0] as (typeof TrackType)[number]
             const audio = new Audio(eb.target.result)
-            audio.volume = 0.5 // Set initial volume to 50%
+            audio.volume = 0.5
             return {
               ...o,
               [song]: {
@@ -65,12 +62,11 @@ export default function App() {
               }
             }
           } else {
-            // console.log(file.path)
             const isWindows = file.path.includes('\\') || file.name.includes('\\')
             const [base, song, type] = (file.path !== '' ? file.path : file.name).split(isWindows ? '\\' : '/').slice(-3)
             const t = type.split('.')[0] as (typeof TrackType)[number]
             const audio = new Audio(eb.target.result)
-            audio.volume = 0.5 // Set initial volume to 50%
+            audio.volume = 0.5
             return {
               ...o,
               [song]: {
@@ -86,106 +82,7 @@ export default function App() {
       }
       reader.readAsDataURL(file)
     }
-    // setIsLoading(false)
   }
-
-  // const handleFiles = (files: any, web?: boolean) => {
-  //   if (files.length === 0) return
-  //   for (const file of files) {
-  //     setTrackPaths((p) => [...p, web ? file.webkitRelativePath : file.path !== '' ? file.path : file.name])
-  //     const reader = new FileReader()
-  //     reader.onload = function (eb: any) {
-  //       setTracksObject((o) => {
-  //         const path = web ? file.webkitRelativePath : file.path !== '' ? file.path : file.name
-  //         const isWindows = path.includes('\\')
-  //         const pathParts = path.split(isWindows ? '\\' : '/')
-
-  //         let song, type
-  //         if (pathParts.length === 3) {
-  //           // main folder -> subfolder (track) -> stems
-  //           song = pathParts[1]
-  //           type = pathParts[2]
-  //         } else {
-  //           // main folder (track) -> stems
-  //           song = pathParts[0]
-  //           type = pathParts[1]
-  //         }
-
-  //         const t = type.split('.')[0] as (typeof TrackType)[number]
-  //         const audio = new Audio(eb.target.result)
-  //         audio.volume = 0.5 // Set initial volume to 50%
-
-  //         return {
-  //           ...o,
-  //           [song]: {
-  //             ...(o[song] || []),
-  //             [t]: {
-  //               path: path,
-  //               audio: audio
-  //             }
-  //           }
-  //         }
-  //       })
-  //     }
-  //     reader.readAsDataURL(file)
-  //   }
-  // }
-
-  // const handleFiles = (files: any, web?: boolean) => {
-  //   setIsLoading(true) // Start loading
-
-  //   const loadPromises = Array.from(files).map(
-  //     (file: any) =>
-  //       new Promise((resolve) => {
-  //         setTrackPaths((p) => [...p, web ? file.webkitRelativePath : file.path])
-  //         const reader = new FileReader()
-  //         reader.onload = function (eb: any) {
-  //           setTracksObject((o) => {
-  //             if (file.webkitRelativePath && file.webkitRelativePath !== '') {
-  //               // console.log(file.webkitRelativePath)
-  //               const [base, song, type] = file.webkitRelativePath.split('/')
-  //               const t = type.split('.')[0] as (typeof TrackType)[number]
-  //               const audio = new Audio(eb.target.result)
-  //               audio.volume = 0.5 // Set initial volume to 50%
-  //               return {
-  //                 ...o,
-  //                 [song]: {
-  //                   ...(o[song] || []),
-  //                   [t]: {
-  //                     path: file.webkitRelativePath,
-  //                     audio: audio
-  //                   }
-  //                 }
-  //               }
-  //             } else {
-  //               // console.log(file.path)
-  //               const isWindows = file.path.includes('\\') || file.name.includes('\\')
-  //               const [base, song, type] = (file.path !== '' ? file.path : file.name).split(isWindows ? '\\' : '/').slice(-3)
-  //               const t = type.split('.')[0] as (typeof TrackType)[number]
-  //               const audio = new Audio(eb.target.result)
-  //               audio.volume = 0.5 // Set initial volume to 50%
-  //               return {
-  //                 ...o,
-  //                 [song]: {
-  //                   ...(o[song] || []),
-  //                   [t]: {
-  //                     path: file.path,
-  //                     audio: audio
-  //                   }
-  //                 }
-  //               }
-  //             }
-  //           })
-  //           resolve(true)
-  //         }
-  //         reader.readAsDataURL(file)
-  //       })
-  //   )
-
-  //   Promise.all(loadPromises).then(() => {
-  //     setIsLoading(false) // End loading
-  //   })
-  // }
 
   const onFileChange = (e: any) => {
     if (e.target.files) {
@@ -256,11 +153,9 @@ export default function App() {
         alt='banner'
         style={{
           marginBottom: Object.keys(tracksObject).length > 3 ? '1rem' : '3rem'
-          // transition: 'all 1s ease'
         }}
       />
       <AddFiles inputRef={inputRef} handleFiles={handleFiles} onFileChange={onFileChange} />
-      {/* {isLoading ? <p>Loading...</p> : <p>Loaded!</p>} */}
       <Box>
         {Object.entries(tracksObject).map(([song, tracks]) => (
           <Song
@@ -275,62 +170,8 @@ export default function App() {
           />
         ))}
       </Box>
-      {/* <Button onClick={() => showMessage('Hacked By Blade')}>Snackbar</Button> */}
+      <Footer />
       <MessageBar message={message} messageType={messageType} isOpen={messageOpen} />
-      <footer
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 50,
-          textAlign: 'center',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-around',
-          background: '#111'
-        }}
-      >
-        <div
-          style={{
-            width: '100%',
-            maxWidth: 600,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: '#111'
-          }}
-        >
-          <a
-            href='https://github.com/YeonV/stemplayer'
-            target='_blank'
-            rel='noopener noreferrer'
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <GitHub sx={{ mr: 1 }} />
-            Open&nbsp;Source&nbsp;|&nbsp;by&nbsp;YeonV
-          </a>
-          <Image src={(isProd ? '/stemplayer' : '') + '/yz.png'} width={32} height={32} alt='logo' />
-
-          <a
-            href='https://github.com/YeonV/stemplayer/releases/latest'
-            target='_blank'
-            rel='noopener noreferrer'
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            Download Desktop App
-            <Download sx={{ ml: 1 }} />
-          </a>
-        </div>
-      </footer>
       <DetectedDialog open={detectedDialogOpen} setOpen={setDetectedDialogOpen} />
     </Box>
   )

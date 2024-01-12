@@ -158,6 +158,7 @@ jobs:
         
   build:
     needs: createrelease
+    permissions: write-all
     continue-on-error: true
     runs-on: ${{ matrix.os }}
     defaults:
@@ -293,7 +294,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          asset_path: dist\stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.dmg
+          asset_path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.dmg
           asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.dmg
           asset_content_type: application/octet-stream
       - name: Upload Osx dmg to Workflow
