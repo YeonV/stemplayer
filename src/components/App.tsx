@@ -6,6 +6,9 @@ import Song from './Song'
 import Image from 'next/image'
 import { Download, GitHub, Message } from '@mui/icons-material'
 import MessageBar from './MessageBar'
+import DetectedDialog from './DetectedDialog'
+const path = require('path')
+
 declare global {
   interface Window {
     electronAPI: any
@@ -22,6 +25,7 @@ export default function App() {
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState<'success' | 'error' | 'warning' | 'info'>('success')
   const [messageOpen, setMessageOpen] = useState(false)
+  const [detectedDialogOpen, setDetectedDialogOpen] = useState(false)
 
   const showMessage = (message: string, messageType: 'success' | 'error' | 'warning' | 'info' = 'success') => {
     setMessage(message)
@@ -32,12 +36,13 @@ export default function App() {
       setTimeout(() => {
         setMessage('')
       }, 60)
-    }, 2000 + (message.length || 0) * 60)
+    }, 2000 + (message?.length || 0) * 60)
   }
 
   const handleFiles = (files: any, web?: boolean) => {
+    if (files.length === 0) return
     for (const file of files) {
-      setTrackPaths((p) => [...p, web ? file.webkitRelativePath : file.path])
+      setTrackPaths((p) => [...p, web ? file.webkitRelativePath : file.path !== '' ? file.path : file.name])
       const reader = new FileReader()
       reader.onload = function (eb: any) {
         setTracksObject((o) => {
@@ -57,8 +62,8 @@ export default function App() {
             }
           } else {
             // console.log(file.path)
-            const isWindows = file.path.includes('\\')
-            const [base, song, type] = file.path.split(isWindows ? '\\' : '/').slice(-3)
+            const isWindows = file.path.includes('\\') || file.name.includes('\\')
+            const [base, song, type] = (file.path !== '' ? file.path : file.name).split(isWindows ? '\\' : '/').slice(-3)
             const t = type.split('.')[0] as (typeof TrackType)[number]
             return {
               ...o,
@@ -88,9 +93,10 @@ export default function App() {
   }
 
   useEffect(() => {
-    for (const path of trackPaths) {
-      const isWindows = path.includes('\\')
-      const [base, song, type] = path.split(isWindows ? '\\' : '/').slice(-3)
+    if (trackPaths.length === 0) return
+    for (const trackPath of trackPaths) {
+      const isWindows = trackPath.includes('\\')
+      const [base, song, type] = trackPath.split(isWindows ? '\\' : '/').slice(-3)
       const t = type.split('.')[0] as (typeof TrackType)[number]
       setTracksObject((o) => {
         const t = type.split('.')[0] as (typeof TrackType)[number]
@@ -99,7 +105,7 @@ export default function App() {
           [song]: {
             ...(o[song] || []),
             [t]: {
-              path,
+              path: trackPath,
               audio: o[song]?.[t]?.audio || new Audio()
             }
           }
@@ -121,15 +127,32 @@ export default function App() {
   }, [tracksObject, played])
 
   useEffect(() => {
-    window.electronAPI.on('protocol', (event: any, arg: any) => {
-      console.log(arg)
+    window.electronAPI.on('message', (event: any, arg: any) => {
       showMessage(arg)
+    })
+    window.electronAPI.on('protocol', (event: any, data: any) => {
+      const { file, content } = data
+      const blob = new Blob([new Uint8Array(content)], { type: 'audio/mpeg' })
+      const fileObj = new File([blob], path.basename(file), { type: 'audio/mpeg' })
+      handleFiles([fileObj])
+    })
+    window.electronAPI.on('stemrollerDetected', () => {
+      setDetectedDialogOpen(true)
     })
   }, [])
 
   return (
     <Box alignItems={'center'} display={'flex'} flexDirection={'column'}>
-      <Image src={(isProd ? '/stemplayer' : '') + '/banner.png'} width={550} height={286} alt='banner' style={{ marginBottom: '3rem' }} />
+      <Image
+        src={(isProd ? '/stemplayer' : '') + '/banner.png'}
+        width={Object.keys(tracksObject).length > 3 ? 110 : 550}
+        height={Object.keys(tracksObject).length > 3 ? 57.2 : 286}
+        alt='banner'
+        style={{
+          marginBottom: Object.keys(tracksObject).length > 3 ? '1rem' : '3rem',
+          transition: 'all 1s ease'
+        }}
+      />
       <AddFiles inputRef={inputRef} handleFiles={handleFiles} onFileChange={onFileChange} />
       <Box>
         {Object.entries(tracksObject).map(([song, tracks]) => (
@@ -145,7 +168,7 @@ export default function App() {
           />
         ))}
       </Box>
-      <Button onClick={() => showMessage('Hacked By Blade')}>Snackbar</Button>
+      {/* <Button onClick={() => showMessage('Hacked By Blade')}>Snackbar</Button> */}
       <MessageBar message={message} messageType={messageType} isOpen={messageOpen} />
       <footer
         style={{
@@ -201,6 +224,7 @@ export default function App() {
           </a>
         </div>
       </footer>
+      <DetectedDialog open={detectedDialogOpen} setOpen={setDetectedDialogOpen} />
     </Box>
   )
 }

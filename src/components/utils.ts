@@ -34,3 +34,29 @@ export interface ITrack {
   path: string
   audio: HTMLAudioElement
 }
+
+export function formatDuration(duration: number) {
+  const hours = Math.floor(duration / 3600)
+  const minutes = Math.floor((duration - hours * 3600) / 60)
+  const seconds = Math.floor(duration - hours * 3600 - minutes * 60)
+
+  let result = ''
+  if (hours > 0) {
+    result += hours.toString().padStart(2, '0') + ':'
+  }
+  result += minutes.toString().padStart(2, '0') + ':'
+  result += seconds.toString().padStart(2, '0')
+  return result
+}
+
+export function throttle(func: any, delay: number) {
+  let lastCall = 0
+  return function (...args: any[]) {
+    const now = new Date().getTime()
+    if (now - lastCall < delay) {
+      return
+    }
+    lastCall = now
+    return func(...args)
+  }
+}

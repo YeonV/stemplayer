@@ -1,9 +1,42 @@
-const { app, BrowserWindow, protocol, net, session, dialog, ipcRenderer } = require('electron')
+const { app, BrowserWindow, protocol, ipcMain } = require('electron')
 const serve = require('electron-serve')
 const path = require('path')
+const fs = require('fs')
+
 let win
+
 const stripTrailingSlash = (str) => {
   return str.endsWith('/') ? str.slice(0, -1) : str
+}
+function readFilesInDir(dirPath) {
+  fs.readdir(dirPath, (err, files) => {
+    if (err) {
+      console.error('Could not list the directory.', err)
+      process.exit(1)
+    }
+
+    files.forEach((file) => {
+      const filePath = path.join(dirPath, file)
+      fs.stat(filePath, (err, stat) => {
+        if (err) {
+          console.error('Error stating file.', err)
+          return
+        }
+
+        if (stat.isFile()) {
+          fs.readFile(filePath, (err, data) => {
+            if (err) {
+              console.error('Error reading file.', err)
+              return
+            }
+            win.webContents.send('protocol', { file: filePath, content: data })
+          })
+        } else if (stat.isDirectory()) {
+          readFilesInDir(filePath) // Recursively read files in subdirectory
+        }
+      })
+    })
+  })
 }
 
 if (process.defaultApp) {
@@ -65,10 +98,16 @@ if (!gotTheLock) {
       if (win.isMinimized()) win.restore()
       win.focus()
     }
-    // the commandLine is array of strings in which last element is deep link url
-    const filePath = stripTrailingSlash(commandLine.pop().slice('stemplayer://'.length))
-    win.webContents.send('protocol', filePath)
-    // dialog.showErrorBox('Welcome Back', `Got Message: ${filePath}`)
+    const folderPath = stripTrailingSlash(commandLine.pop().slice('stemplayer://'.length))
+    if (win) {
+      if (win.isMinimized()) win.restore()
+      win.focus()
+    }
+    if (folderPath.split('=')[0] === 'message') {
+      win.webContents.send('message', folderPath.split('=')[1])
+    } else {
+      readFilesInDir(folderPath)
+    }
   })
 
   // Create mainWindow, load the rest of the app, etc...
@@ -78,17 +117,24 @@ if (!gotTheLock) {
 }
 
 app.on('ready', () => {
-  // const partition = 'persist:example'
-  // const ses = session.fromPartition(partition)
-  console.log('YZ', process.env.npm_lifecycle_event)
+  const mode = process.env.npm_lifecycle_event
+  const homeDir = app.getPath('home')
+  const musicDir = path.join(homeDir, 'Music', 'StemRoller')
+
+  console.log('Mode:', mode)
+  console.log('HomePath:', homeDir)
+  console.log('MusicPath:', musicDir)
   protocol.handle('stemplayer', (request) => {
-    // const parsedUrl = url.parse(request.url)
-    // const filePath = decodeURIComponent(parsedUrl.pathname)
-    // return dialog.showMessageBox({ message: filePath })
-    const filePath = stripTrailingSlash(request.url.slice('stemplayer://'.length))
-    return win.webContents.send('protocol', filePath)
-    // dialog.showMessageBox({ message: filePath })
-    // return dialog.showErrorBox(`stemplayer ${filePath}`)
+    const folderPath = stripTrailingSlash(request.url.slice('stemplayer://'.length))
+    if (win) {
+      if (win.isMinimized()) win.restore()
+      win.focus()
+    }
+    if (folderPath.split('=')[0] === 'message') {
+      win.webContents.send('message', folderPath.split('=')[1])
+    } else {
+      readFilesInDir(folderPath)
+    }
   })
   if (!app.isDefaultProtocolClient('stemplayer')) {
     app.setAsDefaultProtocolClient('stemplayer')
@@ -105,9 +151,19 @@ app.on('ready', () => {
   } else {
     app.setAsDefaultProtocolClient('stemplayer')
   }
-  // app.setAsDefaultProtocolClient('stemplayer')
 
-  // createWindow()
+  if (fs.existsSync(musicDir)) {
+    console.log('Music directory exists')
+    setTimeout(() => {
+      win.webContents.send('stemrollerDetected')
+    }, 5000)
+  } else {
+    console.log('Music directory does not exist')
+  }
+
+  ipcMain.on('import-all', () => {
+    readFilesInDir(musicDir)
+  })
 })
 
 app.on('window-all-closed', () => {
