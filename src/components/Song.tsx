@@ -2,7 +2,7 @@ import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Slider, Sta
 import { ExpandMore, PlayArrow, Stop } from '@mui/icons-material'
 import { ITrack, TrackType, formatDuration, throttle } from '@/components/utils'
 import Track from './Track'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const Song = ({
   song,
@@ -26,6 +26,14 @@ const Song = ({
   const title = name.split('-').slice(0, -1).join('-')
   const [position, setPosition] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [soloed, setSoloed] = useState<string | false>(false)
+  const [mutedTracks, setMutedTracks] = useState({
+    drums: false,
+    bass: false,
+    instrumental: false,
+    vocals: false,
+    other: false
+  })
 
   const playAllTracks = async () => {
     stopAllTracks()
@@ -55,6 +63,26 @@ const Song = ({
     setPlayed((p) => p + 1)
   }
 
+  useEffect(() => {
+    if (soloed === false) {
+      setMutedTracks({
+        drums: false,
+        bass: false,
+        instrumental: false,
+        vocals: false,
+        other: false
+      })
+    } else {
+      setMutedTracks({
+        drums: soloed !== 'drums',
+        bass: soloed !== 'bass',
+        instrumental: soloed !== 'instrumental',
+        vocals: soloed !== 'vocals',
+        other: soloed !== 'other'
+      })
+    }
+  }, [soloed])
+
   return (
     <Accordion expanded={expanded === song} onChange={handleExpand(song)} sx={{ minWidth: 600 }}>
       <AccordionSummary expandIcon={<ExpandMore />} aria-controls='panel1a-content' id={song}>
@@ -77,8 +105,10 @@ const Song = ({
       </AccordionSummary>
       <AccordionDetails>
         <Stack direction={'column'} flexGrow={1}>
-          <Box sx={{ p: 2 }}>
+          <Stack direction={'row'} alignItems={'center'} sx={{ p: '0 16px 16px 2px' }}>
+            <div style={{ paddingRight: '1rem' }}>{formatDuration(position)}</div>
             <Slider
+              color='info'
               disabled={!isPlaying[song]}
               value={position}
               max={duration}
@@ -91,13 +121,20 @@ const Song = ({
                 }
               }}
             />
-            <div>
-              {formatDuration(position)} / {formatDuration(duration)}
-            </div>
-          </Box>
+            <div style={{ paddingLeft: '1rem' }}>{formatDuration(duration)}</div>
+          </Stack>
           {tracks &&
             Object.entries(tracks).map(([type, track]) => (
-              <Track disabled={!isPlaying[song]} key={type} track={track} trackType={type as (typeof TrackType)[number]} />
+              <Track
+                disabled={!isPlaying[song]}
+                key={type}
+                track={track}
+                trackType={type as (typeof TrackType)[number]}
+                soloed={soloed}
+                setSoloed={setSoloed}
+                mutedTracks={mutedTracks}
+                setMutedTracks={setMutedTracks}
+              />
             ))}
         </Stack>
       </AccordionDetails>

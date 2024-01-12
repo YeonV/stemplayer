@@ -26,6 +26,7 @@ export default function App() {
   const [messageType, setMessageType] = useState<'success' | 'error' | 'warning' | 'info'>('success')
   const [messageOpen, setMessageOpen] = useState(false)
   const [detectedDialogOpen, setDetectedDialogOpen] = useState(false)
+  // const [isLoading, setIsLoading] = useState(false)
 
   const showMessage = (message: string, messageType: 'success' | 'error' | 'warning' | 'info' = 'success') => {
     setMessage(message)
@@ -40,6 +41,7 @@ export default function App() {
   }
 
   const handleFiles = (files: any, web?: boolean) => {
+    // setIsLoading(true)
     if (files.length === 0) return
     for (const file of files) {
       setTrackPaths((p) => [...p, web ? file.webkitRelativePath : file.path !== '' ? file.path : file.name])
@@ -50,13 +52,15 @@ export default function App() {
             // console.log(file.webkitRelativePath)
             const [base, song, type] = file.webkitRelativePath.split('/')
             const t = type.split('.')[0] as (typeof TrackType)[number]
+            const audio = new Audio(eb.target.result)
+            audio.volume = 0.5 // Set initial volume to 50%
             return {
               ...o,
               [song]: {
                 ...(o[song] || []),
                 [t]: {
                   path: file.webkitRelativePath,
-                  audio: new Audio(eb.target.result)
+                  audio: audio
                 }
               }
             }
@@ -65,13 +69,15 @@ export default function App() {
             const isWindows = file.path.includes('\\') || file.name.includes('\\')
             const [base, song, type] = (file.path !== '' ? file.path : file.name).split(isWindows ? '\\' : '/').slice(-3)
             const t = type.split('.')[0] as (typeof TrackType)[number]
+            const audio = new Audio(eb.target.result)
+            audio.volume = 0.5 // Set initial volume to 50%
             return {
               ...o,
               [song]: {
                 ...(o[song] || []),
                 [t]: {
                   path: file.path,
-                  audio: new Audio(eb.target.result)
+                  audio: audio
                 }
               }
             }
@@ -80,7 +86,64 @@ export default function App() {
       }
       reader.readAsDataURL(file)
     }
+    // setIsLoading(false)
   }
+
+  // const handleFiles = (files: any, web?: boolean) => {
+  //   setIsLoading(true) // Start loading
+
+  //   const loadPromises = Array.from(files).map(
+  //     (file: any) =>
+  //       new Promise((resolve) => {
+  //         setTrackPaths((p) => [...p, web ? file.webkitRelativePath : file.path])
+  //         const reader = new FileReader()
+  //         reader.onload = function (eb: any) {
+  //           setTracksObject((o) => {
+  //             if (file.webkitRelativePath && file.webkitRelativePath !== '') {
+  //               // console.log(file.webkitRelativePath)
+  //               const [base, song, type] = file.webkitRelativePath.split('/')
+  //               const t = type.split('.')[0] as (typeof TrackType)[number]
+  //               const audio = new Audio(eb.target.result)
+  //               audio.volume = 0.5 // Set initial volume to 50%
+  //               return {
+  //                 ...o,
+  //                 [song]: {
+  //                   ...(o[song] || []),
+  //                   [t]: {
+  //                     path: file.webkitRelativePath,
+  //                     audio: audio
+  //                   }
+  //                 }
+  //               }
+  //             } else {
+  //               // console.log(file.path)
+  //               const isWindows = file.path.includes('\\') || file.name.includes('\\')
+  //               const [base, song, type] = (file.path !== '' ? file.path : file.name).split(isWindows ? '\\' : '/').slice(-3)
+  //               const t = type.split('.')[0] as (typeof TrackType)[number]
+  //               const audio = new Audio(eb.target.result)
+  //               audio.volume = 0.5 // Set initial volume to 50%
+  //               return {
+  //                 ...o,
+  //                 [song]: {
+  //                   ...(o[song] || []),
+  //                   [t]: {
+  //                     path: file.path,
+  //                     audio: audio
+  //                   }
+  //                 }
+  //               }
+  //             }
+  //           })
+  //           resolve(true)
+  //         }
+  //         reader.readAsDataURL(file)
+  //       })
+  //   )
+
+  //   Promise.all(loadPromises).then(() => {
+  //     setIsLoading(false) // End loading
+  //   })
+  // }
 
   const onFileChange = (e: any) => {
     if (e.target.files) {
@@ -149,11 +212,12 @@ export default function App() {
         height={Object.keys(tracksObject).length > 3 ? 57.2 : 286}
         alt='banner'
         style={{
-          marginBottom: Object.keys(tracksObject).length > 3 ? '1rem' : '3rem',
-          transition: 'all 1s ease'
+          marginBottom: Object.keys(tracksObject).length > 3 ? '1rem' : '3rem'
+          // transition: 'all 1s ease'
         }}
       />
       <AddFiles inputRef={inputRef} handleFiles={handleFiles} onFileChange={onFileChange} />
+      {/* {isLoading ? <p>Loading...</p> : <p>Loaded!</p>} */}
       <Box>
         {Object.entries(tracksObject).map(([song, tracks]) => (
           <Song

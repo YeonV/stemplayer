@@ -1,35 +1,33 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Box, Button, Slider, Stack, Typography, useTheme } from '@mui/material'
 import { VolumeOff, VolumeUp } from '@mui/icons-material'
 import { ITrack, TrackType } from '@/components/utils'
 
-const Track = ({ track, trackType, disabled }: { track: ITrack; trackType: (typeof TrackType)[number]; disabled?: boolean }) => {
+const Track = ({
+  track,
+  trackType,
+  disabled,
+  soloed,
+  setSoloed,
+  mutedTracks,
+  setMutedTracks
+}: {
+  track: ITrack
+  trackType: (typeof TrackType)[number]
+  disabled?: boolean
+  soloed?: string | false
+  setSoloed: React.Dispatch<React.SetStateAction<string | false>>
+  mutedTracks: Record<(typeof TrackType)[number], boolean>
+  setMutedTracks: React.Dispatch<React.SetStateAction<Record<(typeof TrackType)[number], boolean>>>
+}) => {
   const theme = useTheme()
-  const [volume, setVolume] = useState(track.audio.volume * 100)
-  const [mutedTracks, setMutedTracks] = useState({
-    drums: false,
-    bass: false,
-    instrumental: false,
-    vocals: false,
-    other: false
-  })
-  const [soloed, setSoloed] = useState<string | false>(false)
+  const [volume, setVolume] = useState(50)
 
   const handleVolChange = (event: any, newValue: number | number[]) => {
     const newVolume = newValue as number
     setVolume(newVolume)
     track.audio.volume = newVolume / 100
   }
-
-  useEffect(() => {
-    const solo = soloed === trackType
-    const updatedMutedTracks = {} as any
-    Object.keys(mutedTracks).forEach((key) => {
-      updatedMutedTracks[key] = solo ? key !== trackType && mutedTracks[key as (typeof TrackType)[number]] : mutedTracks[key as (typeof TrackType)[number]]
-    })
-    setMutedTracks(updatedMutedTracks)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [soloed, trackType])
 
   useEffect(() => {
     track.audio.muted = mutedTracks[trackType]
@@ -56,11 +54,32 @@ const Track = ({ track, trackType, disabled }: { track: ITrack; trackType: (type
           disabled={disabled}
           variant={soloed ? 'contained' : 'outlined'}
           color={soloed === trackType ? 'primary' : 'inherit'}
-          onClick={() => setSoloed((prevSolo) => (prevSolo === trackType ? false : trackType))}
+          onClick={() => {
+            if (soloed === trackType) {
+              // setMutedTracks({
+              //   drums: false,
+              //   bass: false,
+              //   instrumental: false,
+              //   vocals: false,
+              //   other: false
+              // })
+              setSoloed(false)
+            } else {
+              // setMutedTracks({
+              //   drums: soloed !== 'drums',
+              //   bass: soloed !== 'bass',
+              //   instrumental: soloed !== 'instrumental',
+              //   vocals: soloed !== 'vocals',
+              //   other: soloed !== 'other'
+              // })
+              setSoloed(trackType)
+            }
+          }}
           sx={{ p: 0, minWidth: 40 }}
         >
           S
         </Button>
+
         <Typography textTransform={'capitalize'} color={disabled ? theme.palette.text.disabled : '#fff'} sx={{ paddingLeft: 3 }}>
           {trackType}
         </Typography>

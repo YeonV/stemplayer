@@ -34,6 +34,7 @@ on:
 jobs:
 
   createrelease:
+    permissions: write-all
     name: ${{ github.event.inputs.release == 'Yes' && 'Create Release' || 'Prepare Matrix' }}
     runs-on: [ubuntu-latest]
     outputs:
