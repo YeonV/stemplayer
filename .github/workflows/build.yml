@@ -112,7 +112,7 @@ jobs:
         release_name: Release v${{ steps.package-version.outputs.current-version}}
         body_path: ./messages.md
         draft: false
-        prerelease: true
+        prerelease: false
     - name: Output Release URL File
       if: github.event.inputs.release == 'Yes'
       run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
