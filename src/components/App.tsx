@@ -28,6 +28,7 @@ export default function App() {
   const [messageOpen, setMessageOpen] = useState(false)
   const [detectedDialogOpen, setDetectedDialogOpen] = useState(false)
   const [detected, setDetected] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const showMessage = (message: string, messageType: 'success' | 'error' | 'warning' | 'info' = 'success') => {
     setMessage(message)
@@ -41,49 +42,110 @@ export default function App() {
     }, 2000 + (message?.length || 0) * 60)
   }
 
-  const handleFiles = (files: any, web?: boolean) => {
+  // const handleFiles = async (files: any, web?: boolean) => {
+  //   setIsLoading(true)
+  //   if (files.length === 0) return
+  //   for (const file of files) {
+  //     setTrackPaths((p) => [...p, web ? file.webkitRelativePath : file.path !== '' ? file.path : file.name])
+  //     const reader = new FileReader()
+  //     reader.onload = function (eb: any) {
+  //       setTracksObject((o) => {
+  //         if (file.webkitRelativePath && file.webkitRelativePath !== '') {
+  //           const [base, song, type] = file.webkitRelativePath.split('/')
+  //           const t = type.split('.')[0] as (typeof TrackType)[number]
+  //           const audio = new Audio(eb.target.result)
+  //           audio.volume = 0.5
+  //           return {
+  //             ...o,
+  //             [song]: {
+  //               ...(o[song] || []),
+  //               [t]: {
+  //                 path: file.webkitRelativePath,
+  //                 audio: audio
+  //               }
+  //             }
+  //           }
+  //         } else {
+  //           const isWindows = file.path.includes('\\') || file.name.includes('\\')
+  //           const [base, song, type] = (file.path !== '' ? file.path : file.name).split(isWindows ? '\\' : '/').slice(-3)
+  //           const t = type.split('.')[0] as (typeof TrackType)[number]
+  //           const audio = new Audio(eb.target.result)
+  //           audio.volume = 0.5
+  //           return {
+  //             ...o,
+  //             [song]: {
+  //               ...(o[song] || []),
+  //               [t]: {
+  //                 path: file.path,
+  //                 audio: audio
+  //               }
+  //             }
+  //           }
+  //         }
+  //       })
+  //     }
+  //     reader.readAsDataURL(file)
+  //   }
+  //   setIsLoading(false)
+  // }
+  const handleFiles = async (files: any, web?: boolean) => {
+    setIsLoading(true)
     if (files.length === 0) return
-    for (const file of files) {
-      setTrackPaths((p) => [...p, web ? file.webkitRelativePath : file.path !== '' ? file.path : file.name])
-      const reader = new FileReader()
-      reader.onload = function (eb: any) {
-        setTracksObject((o) => {
-          if (file.webkitRelativePath && file.webkitRelativePath !== '') {
-            const [base, song, type] = file.webkitRelativePath.split('/')
-            const t = type.split('.')[0] as (typeof TrackType)[number]
-            const audio = new Audio(eb.target.result)
-            audio.volume = 0.5
-            return {
-              ...o,
-              [song]: {
-                ...(o[song] || []),
-                [t]: {
-                  path: file.webkitRelativePath,
-                  audio: audio
+
+    const promises = files.map(
+      (file: any) =>
+        new Promise((resolve, reject) => {
+          setTrackPaths((p) => [...p, web ? file.webkitRelativePath : file.path !== '' ? file.path : file.name])
+          const reader = new FileReader()
+          reader.onload = function (eb: any) {
+            setTracksObject((o) => {
+              if (file.webkitRelativePath && file.webkitRelativePath !== '') {
+                const [base, song, type] = file.webkitRelativePath.split('/')
+                const t = type.split('.')[0] as (typeof TrackType)[number]
+                const audio = new Audio(eb.target.result)
+                audio.volume = 0.5
+                return {
+                  ...o,
+                  [song]: {
+                    ...(o[song] || []),
+                    [t]: {
+                      path: file.webkitRelativePath,
+                      audio: audio
+                    }
+                  }
+                }
+              } else {
+                const isWindows = file.path.includes('\\') || file.name.includes('\\')
+                const [base, song, type] = (file.path !== '' ? file.path : file.name).split(isWindows ? '\\' : '/').slice(-3)
+                const t = type.split('.')[0] as (typeof TrackType)[number]
+                const audio = new Audio(eb.target.result)
+                audio.volume = 0.5
+                return {
+                  ...o,
+                  [song]: {
+                    ...(o[song] || []),
+                    [t]: {
+                      path: file.path,
+                      audio: audio
+                    }
+                  }
                 }
               }
-            }
-          } else {
-            const isWindows = file.path.includes('\\') || file.name.includes('\\')
-            const [base, song, type] = (file.path !== '' ? file.path : file.name).split(isWindows ? '\\' : '/').slice(-3)
-            const t = type.split('.')[0] as (typeof TrackType)[number]
-            const audio = new Audio(eb.target.result)
-            audio.volume = 0.5
-            return {
-              ...o,
-              [song]: {
-                ...(o[song] || []),
-                [t]: {
-                  path: file.path,
-                  audio: audio
-                }
-              }
-            }
+            })
+            resolve(true)
           }
+          reader.onerror = reject
+          reader.readAsDataURL(file)
         })
-      }
-      reader.readAsDataURL(file)
+    )
+
+    try {
+      await Promise.all(promises)
+    } catch (error) {
+      console.error('Error reading files:', error)
     }
+
+    setIsLoading(false)
   }
 
   const onFileChange = (e: any) => {
@@ -150,6 +212,7 @@ export default function App() {
   return (
     <Box alignItems={'center'} display={'flex'} flexDirection={'column'}>
       <Image
+        priority
         src={(isProd ? '/stemplayer' : '') + '/banner.png'}
         width={Object.keys(tracksObject).length > 3 ? 110 : 550}
         height={Object.keys(tracksObject).length > 3 ? 57.2 : 286}
@@ -158,6 +221,7 @@ export default function App() {
           marginBottom: Object.keys(tracksObject).length > 3 ? '1rem' : '3rem'
         }}
       />
+      <div>{isLoading ? 'Loading...' : 'loaded'}</div>
       <AddFiles inputRef={inputRef} handleFiles={handleFiles} onFileChange={onFileChange} />
 
       {Object.keys(tracksObject).length === 0 && detected && (
