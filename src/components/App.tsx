@@ -71,56 +71,56 @@ export default function App() {
         new Promise((resolve, reject) => {
           const reader = new FileReader()
           reader.onload = function (eb: any) {
-            setTracksObject((o) => {
-              if (file.webkitRelativePath && file.webkitRelativePath !== '') {
-                const [base, song, type] = file.webkitRelativePath.split('/')
-                const t = type.split('.')[0] as (typeof TrackType)[number]
-                let audio: any
-                const existingAudio = tracksObject[song]?.[t as (typeof TrackType)[number]]?.audio
-                if (existingAudio) {
-                  audio = existingAudio
-                } else {
-                  audio = new Audio(eb.target.result)
-                }
-                audio.volume = 0.5
-                return {
-                  ...o,
-                  [song]: {
-                    ...(o[song] || []),
-                    [t]: {
-                      path: file.webkitRelativePath,
-                      audio: audio
-                    }
-                  }
-                }
+            // setTracksObject((o) => {
+            if (file.webkitRelativePath && file.webkitRelativePath !== '') {
+              const [base, song, type] = file.webkitRelativePath.split('/')
+              const t = type.split('.')[0] as (typeof TrackType)[number]
+              let audio: any
+              const existingAudio = tracksObject[song]?.[t as (typeof TrackType)[number]]?.audio
+              if (existingAudio) {
+                audio = existingAudio
               } else {
-                const filePath = file.path !== '' ? file.path : file.name
-                const parsedPath = path.parse(filePath)
-                const song = (parsedPath.dir || yzdir).includes('\\') ? (parsedPath.dir || yzdir).split('\\').pop() : (parsedPath.dir || yzdir).split('/').pop()
-                const t = parsedPath.name.includes('\\') ? parsedPath.name.split('\\').pop() : parsedPath.name.split('/').pop()
-                let audio: any
-                const existingAudio = tracksObject[song]?.[t as (typeof TrackType)[number]]?.audio
-                if (existingAudio) {
-                  audio = existingAudio
-                } else {
-                  audio = new Audio(eb.target.result)
-                }
-                audio.volume = 0.5
-                const output = {
-                  ...o,
-                  [song]: {
-                    ...(o[song] || []),
-                    [t]: {
-                      path: parsedPath.base,
-                      audio: audio
-                    }
+                audio = new Audio(eb.target.result)
+              }
+              audio.volume = 0.5
+              tracksObjectRef.current = {
+                ...tracksObjectRef.current,
+                [song]: {
+                  ...(tracksObjectRef.current[song] || []),
+                  [t]: {
+                    path: file.webkitRelativePath,
+                    audio: audio
                   }
                 }
-                tracksObjectRef.current = output
-                return output
               }
-            })
+            } else {
+              const filePath = file.path !== '' ? file.path : file.name
+              const parsedPath = path.parse(filePath)
+              const song = (parsedPath.dir || yzdir).includes('\\') ? (parsedPath.dir || yzdir).split('\\').pop() : (parsedPath.dir || yzdir).split('/').pop()
+              const t = parsedPath.name.includes('\\') ? parsedPath.name.split('\\').pop() : parsedPath.name.split('/').pop()
+              let audio: any
+              const existingAudio = tracksObject[song]?.[t as (typeof TrackType)[number]]?.audio
+              if (existingAudio) {
+                audio = existingAudio
+              } else {
+                audio = new Audio(eb.target.result)
+              }
+              audio.volume = 0.5
+              const output = {
+                ...tracksObjectRef.current,
+                [song]: {
+                  ...(tracksObjectRef.current[song] || []),
+                  [t]: {
+                    path: parsedPath.base,
+                    audio: audio
+                  }
+                }
+              }
+              tracksObjectRef.current = output
+            }
+            // })
             resolve(true)
+            setTracksObject(tracksObjectRef.current)
           }
           reader.onerror = reject
           reader.readAsDataURL(file)
@@ -163,8 +163,8 @@ export default function App() {
     window.electronAPI.on('songs', (event: any, arg: any) => {
       const { currentIndex, total } = arg
 
-      console.log(currentIndex + 1 + '/' + total + ' songs imported', 'info')
-      showMessage(currentIndex + 1 + '/' + total + ' songs imported', 'info')
+      // console.log(currentIndex + 1 + '/' + total + ' songs imported', 'info')
+      showMessage('Importing ' + (currentIndex + 1) + ' songs...', 'info')
       songsImported.current = currentIndex + 1
       songsTotal.current = total
     })
@@ -202,6 +202,7 @@ export default function App() {
         {Object.entries(tracksObject).map(([song, tracks]) => (
           <Song
             key={song}
+            disabled={isLoading}
             song={song}
             tracks={tracks}
             expanded={expanded}

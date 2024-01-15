@@ -12,7 +12,8 @@ const Song = ({
   handleExpand,
   isPlaying,
   setPlayed,
-  setTracksObject
+  setTracksObject,
+  disabled
 }: {
   song: string
   tracks: Record<(typeof TrackType)[number], ITrack>
@@ -22,6 +23,7 @@ const Song = ({
   isPlaying: Record<string, boolean>
   setPlayed: React.Dispatch<React.SetStateAction<number>>
   setTracksObject: React.Dispatch<React.SetStateAction<Record<string, Record<(typeof TrackType)[number], ITrack>>>>
+  disabled?: boolean
 }) => {
   const name = song.split('-').slice(0, -1).join('-').replaceAll('(Official Video)', '').replaceAll(' - Official Video', '')
   const artist = name.split('\\').pop()?.split('-').slice(-1)[0] || name.split('-').slice(-1)[0]
@@ -149,6 +151,7 @@ const Song = ({
       <AccordionSummary expandIcon={<ExpandMore />} aria-controls='panel1a-content' id={song}>
         <Stack direction={'row'} alignItems={'center'}>
           <Button
+            disabled={disabled}
             variant={Object.keys(isPlaying).some((p) => isPlaying[p]) && !isPlaying[song] ? 'outlined' : 'contained'}
             color={isPlaying[song] ? 'secondary' : 'primary'}
             onClick={handleButtonClick}
