@@ -57,7 +57,7 @@ async function readFilesInDir(win, dirPath) {
   try {
     dirPath = path.resolve(dirPath); // Ensure dirPath is an absolute path
     const files = await fs.readdir(dirPath)
-    for (const file of files) {
+    for (const [index, file] of files.entries()) {
       const filePath = path.join(dirPath, file)
       const stat = await fs.stat(filePath)
       if (stat.isDirectory()) {
@@ -69,6 +69,7 @@ async function readFilesInDir(win, dirPath) {
           win.webContents.send('protocol', { file: subFilePath, content: data, yzdir: filePath })
         }
       }
+      win.webContents.send('songs', { currentIndex: index, total: files.length })
     }
   } catch (error) {
     console.error(`Failed to read files in directory: ${error}`)

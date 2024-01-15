@@ -91,7 +91,10 @@ export default function App() {
   const handleFiles = async (files: any, web?: boolean, yzdir?: any) => {
     // console.log(files, yzdir)
     setIsLoading(true)
-    if (files.length === 0) return
+    if (files.length === 0) {
+      setIsLoading(false)
+      return
+    }
 
     const promises = files.map(
       (file: any) =>
@@ -103,7 +106,13 @@ export default function App() {
               if (file.webkitRelativePath && file.webkitRelativePath !== '') {
                 const [base, song, type] = file.webkitRelativePath.split('/')
                 const t = type.split('.')[0] as (typeof TrackType)[number]
-                const audio = new Audio(eb.target.result)
+                let audio: any
+                const existingAudio = tracksObject[song]?.[t as (typeof TrackType)[number]]?.audio
+                if (existingAudio) {
+                  audio = existingAudio
+                } else {
+                  audio = new Audio(eb.target.result)
+                }
                 audio.volume = 0.5
                 return {
                   ...o,
@@ -118,9 +127,15 @@ export default function App() {
               } else {
                 const filePath = file.path !== '' ? file.path : file.name
                 const parsedPath = path.parse(filePath)
-                const song = (parsedPath.dir || yzdir).split(path.sep).pop()
-                const t = parsedPath.name
-                const audio = new Audio(eb.target.result)
+                const song = (parsedPath.dir || yzdir).includes('\\') ? (parsedPath.dir || yzdir).split('\\').pop() : (parsedPath.dir || yzdir).split('/').pop()
+                const t = parsedPath.name.includes('\\') ? parsedPath.name.split('\\').pop() : parsedPath.name.split('/').pop()
+                let audio: any
+                const existingAudio = tracksObject[song]?.[t as (typeof TrackType)[number]]?.audio
+                if (existingAudio) {
+                  audio = existingAudio
+                } else {
+                  audio = new Audio(eb.target.result)
+                }
                 audio.volume = 0.5
 
                 return {
@@ -128,7 +143,7 @@ export default function App() {
                   [song]: {
                     ...(o[song] || []),
                     [t]: {
-                      path: file.path,
+                      path: parsedPath.base,
                       audio: audio
                     }
                   }
@@ -161,33 +176,63 @@ export default function App() {
     setExpanded(isExpanded ? panel : false)
   }
 
+  // useEffect(() => {
+  //   if (trackPaths.length === 0) return
+  //   for (const trackPath of trackPaths) {
+  //     const isWindows = trackPath.includes('\\')
+  //     const [base, song, type] = trackPath.split(isWindows ? '\\' : '/').slice(-3)
+  //     const t = type.split('.')[0] as (typeof TrackType)[number]
+  //     setTracksObject((o) => {
+  //       const t = type.split('.')[0] as (typeof TrackType)[number]
+  //       return {
+  //         ...o,
+  //         [song]: {
+  //           ...(o[song] || []),
+  //           [t]: {
+  //             path: trackPath,
+  //             audio: o[song]?.[t]?.audio || new Audio()
+  //           }
+  //         }
+  //       }
+  //     })
+  //   }
+  // }, [trackPaths])
+  const [currentSong, setCurrentSong] = useState(null)
+  console.log(tracksObject)
   useEffect(() => {
     if (trackPaths.length === 0) return
     for (const trackPath of trackPaths) {
       const parsedPath = path.parse(trackPath)
-      const song = parsedPath.dir.split(path.sep).pop()
-      if (song !== '') setTracksObject((o) => {
-        const t = parsedPath.name
-        
-        return {
-          ...o,
-          [song]: {
-            ...(o[song] || []),
-            [t]: {
-              path: trackPath,
-              audio: o[song]?.[t as typeof TrackType[number]]?.audio || new Audio()
+      let song = parsedPath.dir.split(path.sep).pop()
+      // console.log(parsedPath, song)
+      if (song !== '') {
+        if (song.includes('\\')) {
+          song = song.split('\\').pop()
+        }
+        console.log('YZ', song)
+        setTracksObject((o) => {
+          const t = parsedPath.name.split('\\').pop()
+
+          return {
+            ...o,
+            [song]: {
+              ...(o[song] || []),
+              [t]: {
+                path: trackPath,
+                audio: o[song]?.[t as (typeof TrackType)[number]]?.audio || new Audio()
+              }
             }
           }
-        }
-      })
+        })
+      }
     }
-  }, [trackPaths])
+  }, [trackPaths, currentSong])
 
   useEffect(() => {
     const anyTrackPlaying = Object.keys(tracksObject).find((key) => {
       if (
         Object.values(tracksObject[key]).some((track) => {
-          return !track.audio.paused
+          return !track.audio?.paused
         })
       )
         return key
@@ -197,6 +242,11 @@ export default function App() {
 
   useEffect(() => {
     if (!window.electronAPI) return
+    window.electronAPI.on('songs', (event: any, arg: any) => {
+      const { currentIndex, total } = arg
+      console.log(currentIndex + 1 + '/' + total + ' songs imported', 'info')
+      showMessage(currentIndex + 1 + '/' + total + ' songs imported', 'info')
+    })
     window.electronAPI.on('message', (event: any, arg: any) => {
       showMessage(arg)
     })
@@ -241,6 +291,7 @@ export default function App() {
             expanded={expanded}
             handleExpand={handleExpand}
             tracksObject={tracksObject}
+            setTracksObject={setTracksObject}
             isPlaying={isPlaying}
             setPlayed={setPlayed}
           />

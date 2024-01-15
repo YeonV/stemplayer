@@ -28,10 +28,10 @@ export const theme = createTheme({
 
 export const inter = Inter({ subsets: ['latin'] })
 
-export const TrackType = ['drums', 'bass', 'instrumental', 'vocals', 'other'] as const
+export const TrackType = ['drums', 'bass', 'instrumental', 'vocals', 'other', 'master'] as const
 
 export interface ITrack {
-  path: string
+  path?: string
   audio: HTMLAudioElement
 }
 
