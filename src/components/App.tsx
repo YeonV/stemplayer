@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, Button } from '@mui/material'
+import { Box, Button, CircularProgress, LinearProgress } from '@mui/material'
 import { ITrack, TrackType } from '@/components/utils'
 import AddFiles from './AddFiles'
 import Song from './Song'
@@ -17,8 +17,9 @@ declare global {
 }
 export default function App() {
   const inputRef = useRef<HTMLInputElement>(null)
-  const [trackPaths, setTrackPaths] = useState<string[]>([])
+  // const [trackPaths, setTrackPaths] = useState<string[]>([])
   const [tracksObject, setTracksObject] = useState<Record<string, Record<(typeof TrackType)[number], ITrack>>>({})
+  const tracksObjectRef = useRef(tracksObject)
   const [expanded, setExpanded] = useState<string | false>(false)
   const [isPlaying, setIsPlaying] = useState({} as Record<string, boolean>)
   const [played, setPlayed] = useState(0)
@@ -29,6 +30,22 @@ export default function App() {
   const [detectedDialogOpen, setDetectedDialogOpen] = useState(false)
   const [detected, setDetected] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const songsImported = useRef(0)
+  const songsTotal = useRef(0)
+
+  let timer = null as any
+
+  function logDone() {
+    if (timer) {
+      clearTimeout(timer)
+    }
+
+    timer = setTimeout(() => {
+      console.log('done')
+      setIsLoading(false)
+      timer = null
+    }, 1000)
+  }
 
   const showMessage = (message: string, messageType: 'success' | 'error' | 'warning' | 'info' = 'success') => {
     setMessage(message)
@@ -42,54 +59,7 @@ export default function App() {
     }, 2000 + (message?.length || 0) * 60)
   }
 
-  // const handleFiles = async (files: any, web?: boolean) => {
-  //   setIsLoading(true)
-  //   if (files.length === 0) return
-  //   for (const file of files) {
-  //     setTrackPaths((p) => [...p, web ? file.webkitRelativePath : file.path !== '' ? file.path : file.name])
-  //     const reader = new FileReader()
-  //     reader.onload = function (eb: any) {
-  //       setTracksObject((o) => {
-  //         if (file.webkitRelativePath && file.webkitRelativePath !== '') {
-  //           const [base, song, type] = file.webkitRelativePath.split('/')
-  //           const t = type.split('.')[0] as (typeof TrackType)[number]
-  //           const audio = new Audio(eb.target.result)
-  //           audio.volume = 0.5
-  //           return {
-  //             ...o,
-  //             [song]: {
-  //               ...(o[song] || []),
-  //               [t]: {
-  //                 path: file.webkitRelativePath,
-  //                 audio: audio
-  //               }
-  //             }
-  //           }
-  //         } else {
-  //           const isWindows = file.path.includes('\\') || file.name.includes('\\')
-  //           const [base, song, type] = (file.path !== '' ? file.path : file.name).split(isWindows ? '\\' : '/').slice(-3)
-  //           const t = type.split('.')[0] as (typeof TrackType)[number]
-  //           const audio = new Audio(eb.target.result)
-  //           audio.volume = 0.5
-  //           return {
-  //             ...o,
-  //             [song]: {
-  //               ...(o[song] || []),
-  //               [t]: {
-  //                 path: file.path,
-  //                 audio: audio
-  //               }
-  //             }
-  //           }
-  //         }
-  //       })
-  //     }
-  //     reader.readAsDataURL(file)
-  //   }
-  //   setIsLoading(false)
-  // }
   const handleFiles = async (files: any, web?: boolean, yzdir?: any) => {
-    // console.log(files, yzdir)
     setIsLoading(true)
     if (files.length === 0) {
       setIsLoading(false)
@@ -99,7 +69,6 @@ export default function App() {
     const promises = files.map(
       (file: any) =>
         new Promise((resolve, reject) => {
-          setTrackPaths((p) => [...p, web ? file.webkitRelativePath : file.path !== '' ? file.path : file.name])
           const reader = new FileReader()
           reader.onload = function (eb: any) {
             setTracksObject((o) => {
@@ -137,8 +106,7 @@ export default function App() {
                   audio = new Audio(eb.target.result)
                 }
                 audio.volume = 0.5
-
-                return {
+                const output = {
                   ...o,
                   [song]: {
                     ...(o[song] || []),
@@ -148,6 +116,8 @@ export default function App() {
                     }
                   }
                 }
+                tracksObjectRef.current = output
+                return output
               }
             })
             resolve(true)
@@ -161,9 +131,9 @@ export default function App() {
       await Promise.all(promises)
     } catch (error) {
       console.error('Error reading files:', error)
+    } finally {
+      if (Object.keys(tracksObjectRef.current).length === songsTotal.current) logDone()
     }
-
-    setIsLoading(false)
   }
 
   const onFileChange = (e: any) => {
@@ -175,58 +145,6 @@ export default function App() {
   const handleExpand = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
     setExpanded(isExpanded ? panel : false)
   }
-
-  // useEffect(() => {
-  //   if (trackPaths.length === 0) return
-  //   for (const trackPath of trackPaths) {
-  //     const isWindows = trackPath.includes('\\')
-  //     const [base, song, type] = trackPath.split(isWindows ? '\\' : '/').slice(-3)
-  //     const t = type.split('.')[0] as (typeof TrackType)[number]
-  //     setTracksObject((o) => {
-  //       const t = type.split('.')[0] as (typeof TrackType)[number]
-  //       return {
-  //         ...o,
-  //         [song]: {
-  //           ...(o[song] || []),
-  //           [t]: {
-  //             path: trackPath,
-  //             audio: o[song]?.[t]?.audio || new Audio()
-  //           }
-  //         }
-  //       }
-  //     })
-  //   }
-  // }, [trackPaths])
-  const [currentSong, setCurrentSong] = useState(null)
-  console.log(tracksObject)
-  useEffect(() => {
-    if (trackPaths.length === 0) return
-    for (const trackPath of trackPaths) {
-      const parsedPath = path.parse(trackPath)
-      let song = parsedPath.dir.includes('\\') ? parsedPath.dir.split('\\').pop() : parsedPath.dir.split('/').pop()
-
-      // console.log(parsedPath, song)
-      if (song !== '') {
-        if (song.includes('\\')) {
-          song = song.split('\\').pop()
-        }
-        setTracksObject((o) => {
-          const t = parsedPath.name.includes('\\') ? parsedPath.name.split('\\').pop() : parsedPath.name.split('/').pop()
-
-          return {
-            ...o,
-            [song]: {
-              ...(o[song] || []),
-              [t]: {
-                path: trackPath,
-                audio: o[song]?.[t as (typeof TrackType)[number]]?.audio || new Audio()
-              }
-            }
-          }
-        })
-      }
-    }
-  }, [trackPaths, currentSong])
 
   useEffect(() => {
     const anyTrackPlaying = Object.keys(tracksObject).find((key) => {
@@ -244,8 +162,11 @@ export default function App() {
     if (!window.electronAPI) return
     window.electronAPI.on('songs', (event: any, arg: any) => {
       const { currentIndex, total } = arg
+
       console.log(currentIndex + 1 + '/' + total + ' songs imported', 'info')
       showMessage(currentIndex + 1 + '/' + total + ' songs imported', 'info')
+      songsImported.current = currentIndex + 1
+      songsTotal.current = total
     })
     window.electronAPI.on('message', (event: any, arg: any) => {
       showMessage(arg)
@@ -274,14 +195,9 @@ export default function App() {
           marginBottom: Object.keys(tracksObject).length > 3 ? '1rem' : '3rem'
         }}
       />
-      <div>{isLoading ? 'Loading...' : 'loaded'}</div>
+
       <AddFiles inputRef={inputRef} handleFiles={handleFiles} onFileChange={onFileChange} />
 
-      {Object.keys(tracksObject).length === 0 && detected && (
-        <Button startIcon={<PlayForWork />} size='large' variant='contained' onClick={() => window.electronAPI.send('import-all')} sx={{ mb: 2 }}>
-          Load Stem Roller Folder
-        </Button>
-      )}
       <Box>
         {Object.entries(tracksObject).map(([song, tracks]) => (
           <Song
@@ -297,6 +213,18 @@ export default function App() {
           />
         ))}
       </Box>
+      {isLoading ? (
+        <Box sx={{ width: '100%', textAlign: 'center', marginTop: '1rem' }}>
+          <Image src={(isProd ? '/stemplayer' : '') + '/loading.gif'} width={32} height={32} alt='logo' />
+        </Box>
+      ) : (
+        Object.keys(tracksObject).length === 0 &&
+        detected && (
+          <Button startIcon={<PlayForWork />} size='large' variant='contained' onClick={() => window.electronAPI.send('import-all')} sx={{ mb: 2 }}>
+            Load Stem Roller Folder
+          </Button>
+        )
+      )}
       <Footer />
       <MessageBar message={message} messageType={messageType} isOpen={messageOpen} />
       <DetectedDialog open={detectedDialogOpen} setOpen={setDetectedDialogOpen} />

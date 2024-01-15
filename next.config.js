@@ -2,7 +2,7 @@
 const isProd = process.env.NODE_ENV === 'production' && process.env.PROD_ENV === 'github'
 
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: isProd,
   output: 'export',
   assetPrefix: isProd ? '/stemplayer/' : '',
   images: {
