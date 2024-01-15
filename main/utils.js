@@ -55,6 +55,7 @@ const path = require('path')
 
 async function readFilesInDir(win, dirPath) {
   try {
+    dirPath = path.resolve(dirPath); // Ensure dirPath is an absolute path
     const files = await fs.readdir(dirPath)
     for (const file of files) {
       const filePath = path.join(dirPath, file)
@@ -64,9 +65,9 @@ async function readFilesInDir(win, dirPath) {
         for (const subFile of subFiles) {
           const subFilePath = path.join(filePath, subFile)
           const data = await fs.readFile(subFilePath)
-          win.webContents.send('protocol', { file: subFilePath, content: data })
+          subFilePath.dir = filePath
+          win.webContents.send('protocol', { file: subFilePath, content: data, yzdir: filePath })
         }
-        // win.webContents.send('message', filePath.split('/').pop())
       }
     }
   } catch (error) {

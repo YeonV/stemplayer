@@ -88,7 +88,8 @@ export default function App() {
   //   }
   //   setIsLoading(false)
   // }
-  const handleFiles = async (files: any, web?: boolean) => {
+  const handleFiles = async (files: any, web?: boolean, yzdir?: any) => {
+    // console.log(files, yzdir)
     setIsLoading(true)
     if (files.length === 0) return
 
@@ -115,11 +116,13 @@ export default function App() {
                   }
                 }
               } else {
-                const isWindows = file.path.includes('\\') || file.name.includes('\\')
-                const [base, song, type] = (file.path !== '' ? file.path : file.name).split(isWindows ? '\\' : '/').slice(-3)
-                const t = type.split('.')[0] as (typeof TrackType)[number]
+                const filePath = file.path !== '' ? file.path : file.name
+                const parsedPath = path.parse(filePath)
+                const song = (parsedPath.dir || yzdir).split(path.sep).pop()
+                const t = parsedPath.name
                 const audio = new Audio(eb.target.result)
                 audio.volume = 0.5
+
                 return {
                   ...o,
                   [song]: {
@@ -161,18 +164,18 @@ export default function App() {
   useEffect(() => {
     if (trackPaths.length === 0) return
     for (const trackPath of trackPaths) {
-      const isWindows = trackPath.includes('\\')
-      const [base, song, type] = trackPath.split(isWindows ? '\\' : '/').slice(-3)
-      const t = type.split('.')[0] as (typeof TrackType)[number]
-      setTracksObject((o) => {
-        const t = type.split('.')[0] as (typeof TrackType)[number]
+      const parsedPath = path.parse(trackPath)
+      const song = parsedPath.dir.split(path.sep).pop()
+      if (song !== '') setTracksObject((o) => {
+        const t = parsedPath.name
+        
         return {
           ...o,
           [song]: {
             ...(o[song] || []),
             [t]: {
               path: trackPath,
-              audio: o[song]?.[t]?.audio || new Audio()
+              audio: o[song]?.[t as typeof TrackType[number]]?.audio || new Audio()
             }
           }
         }
@@ -198,10 +201,10 @@ export default function App() {
       showMessage(arg)
     })
     window.electronAPI.on('protocol', (event: any, data: any) => {
-      const { file, content } = data
+      const { file, content, yzdir } = data
       const blob = new Blob([new Uint8Array(content)], { type: 'audio/mpeg' })
       const fileObj = new File([blob], path.basename(file), { type: 'audio/mpeg' })
-      handleFiles([fileObj])
+      handleFiles([fileObj], false, yzdir)
     })
     window.electronAPI.on('stemrollerDetected', () => {
       setDetectedDialogOpen(true)
