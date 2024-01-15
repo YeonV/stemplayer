@@ -203,15 +203,15 @@ export default function App() {
     if (trackPaths.length === 0) return
     for (const trackPath of trackPaths) {
       const parsedPath = path.parse(trackPath)
-      let song = parsedPath.dir.split(path.sep).pop()
+      let song = parsedPath.dir.includes('\\') ? parsedPath.dir.split('\\').pop() : parsedPath.dir.split('/').pop()
+
       // console.log(parsedPath, song)
       if (song !== '') {
         if (song.includes('\\')) {
           song = song.split('\\').pop()
         }
-        console.log('YZ', song)
         setTracksObject((o) => {
-          const t = parsedPath.name.split('\\').pop()
+          const t = parsedPath.name.includes('\\') ? parsedPath.name.split('\\').pop() : parsedPath.name.split('/').pop()
 
           return {
             ...o,
