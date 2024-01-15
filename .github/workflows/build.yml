@@ -44,7 +44,7 @@ jobs:
     - name: Get Messages    
       if: github.event.inputs.release == 'Yes'
       run: |
-        echo "## New StemRoller binaries available:
+        echo "## New StemPlayer binaries available:
 
         ---
 
@@ -279,13 +279,13 @@ jobs:
         with:
           upload_url: ${{ steps.get_release_info.outputs.upload_url }}
           asset_path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.zip
-          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.zip
+          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac.zip
           asset_content_type: application/zip
       - name: Upload Osx zip to Workflow
         if: startsWith(matrix.OS, 'macos') &&  github.event.inputs.release == 'No' && github.event.inputs.macos == 'true'
         uses: actions/upload-artifact@v3
         with:
-            name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.zip
+            name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac.zip
             path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.zip
       - name: Upload Osx dmg To Release        
         if: startsWith(matrix.OS, 'macos') && github.event.inputs.release == 'Yes' && github.event.inputs.macos == 'true'
@@ -295,50 +295,15 @@ jobs:
         with:
           upload_url: ${{ steps.get_release_info.outputs.upload_url }}
           asset_path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.dmg
-          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.dmg
+          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac.dmg
           asset_content_type: application/octet-stream
       - name: Upload Osx dmg to Workflow
         if: startsWith(matrix.OS, 'macos') &&  github.event.inputs.release == 'No' && github.event.inputs.macos == 'true'
         uses: actions/upload-artifact@v3
         with:
-            name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.dmg
+            name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac.dmg
             path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-x64.dmg
 
-      - name: Upload Osx-arm64 zip To Release        
-        if: startsWith(matrix.OS, 'osx-arm64') && github.event.inputs.release == 'Yes' && github.event.inputs.osxarm64 == 'true'
-        uses: YeonV/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          asset_path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.zip
-          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.zip
-          asset_content_type: application/zip
-
-      - name: Upload Osx-arm64 zip to Workflow
-        if: startsWith(matrix.OS, 'osx-arm64') &&  github.event.inputs.release == 'No' && github.event.inputs.osxarm64 == 'true'
-        uses: actions/upload-artifact@v3
-        with:
-            name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.zip
-            path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.zip      
-
-      - name: Upload Osx-arm64 dmg To Release        
-        if: startsWith(matrix.OS, 'osx-arm64') && github.event.inputs.release == 'Yes' && github.event.inputs.osxarm64 == 'true'
-        uses: YeonV/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          asset_path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.dmg
-          asset_name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.dmg
-          asset_content_type: application/octet-stream
-
-      - name: Upload Osx-arm64 dmg to Workflow
-        if: startsWith(matrix.OS, 'osx-arm64') &&  github.event.inputs.release == 'No' && github.event.inputs.osxarm64 == 'true'
-        uses: actions/upload-artifact@v3
-        with:
-            name: stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.dmg
-            path: dist/stemplayer-v${{ needs.createrelease.outputs.version }}--mac-arm64.dmg      
 
       - name: Upload Linux AppImage To Release
         if: startsWith(matrix.os, 'ubuntu') &&  github.event.inputs.release == 'Yes' && github.event.inputs.ubuntu == 'true'
