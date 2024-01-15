@@ -41,7 +41,6 @@ export default function App() {
     }
 
     timer = setTimeout(() => {
-      console.log('done')
       setIsLoading(false)
       timer = null
     }, 1000)
