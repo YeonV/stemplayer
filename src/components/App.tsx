@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { use, useEffect, useRef, useState } from 'react'
 import { Box, Button, CircularProgress, LinearProgress } from '@mui/material'
 import { ITrack, TrackType } from '@/components/utils'
 import AddFiles from './AddFiles'
@@ -109,7 +109,7 @@ export default function App() {
               const song = songb.constructor.name === 'Array' ? songb.slice(-2)[1] : songb
               // const song = !!window?.electronAPI ? theSongb : theSongb
               console.log('isElectron', !!window?.electronAPI)
-              console.log('SONG:', song)
+              console.log('constructor:', songb.constructor.name)
               console.log('SONGB:', songb)
               const t = parsedPath.name.includes('\\') ? parsedPath.name.split('\\').pop() : parsedPath.name.split('/').pop()
               console.log('Stem:', t)
@@ -199,11 +199,23 @@ export default function App() {
       const fileObj = new File([blob], path.basename(file), { type: 'audio/mpeg' })
       handleFiles([fileObj], false, yzdir, true)
     })
-    window.electronAPI.on('stemrollerDetected', () => {
-      setDetectedDialogOpen(true)
+    window.electronAPI.on('stemrollerDetected', (event: any, arg: any) => {
+      console.log(arg)
       setDetected(true)
     })
+    window.electronAPI.on('got-stemroller', (event: any, arg: any) => {
+      console.log(arg)
+      if (arg) setDetected(true)
+    })
+    setTimeout(() => {
+      window.electronAPI.send('get-stemroller')
+    }, 1000)
   }, [])
+
+  useEffect(() => {
+    console.log(detected)
+    if (detected) setDetectedDialogOpen(true)
+  }, [detected])
 
   return (
     <Box alignItems={'center'} display={'flex'} flexDirection={'column'}>

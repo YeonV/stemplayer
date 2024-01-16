@@ -51,8 +51,11 @@ const createWindow = () => {
       if (fs.existsSync(musicDir)) {
         console.log('Music directory exists')
         setTimeout(() => {
-          win.webContents.send('stemrollerDetected')
+          win.webContents.send('stemrollerDetected', musicDir)
         }, 500)
+        setTimeout(() => {
+          win.webContents.send('stemrollerDetected', musicDir)
+        }, 1500)
       } else {
         console.log('Music directory does not exist')
       }
@@ -122,6 +125,9 @@ app.on('ready', () => {
     } catch (error) {
       console.error(`Failed to read files in directory: ${error}`)
     }
+  })
+  ipcMain.on('get-stemroller', () => {
+    win.webContents.send('got-stemroller', musicDir)
   })
 })
 
