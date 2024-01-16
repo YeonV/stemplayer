@@ -1,6 +1,6 @@
 import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Slider, Stack, Typography } from '@mui/material'
 import { ExpandMore, PlayArrow, Stop } from '@mui/icons-material'
-import { ITrack, TrackType, formatDuration, throttle } from '@/components/utils'
+import { ITrack, TrackType, extractName, formatDuration, mutedTracksDefault, throttle, volumesDefault } from '@/components/utils'
 import Track from './Track'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -12,7 +12,7 @@ const Song = ({
   handleExpand,
   isPlaying,
   setPlayed,
-  setTracksObject,
+  // setTracksObject,
   disabled
 }: {
   song: string
@@ -25,29 +25,13 @@ const Song = ({
   setTracksObject: React.Dispatch<React.SetStateAction<Record<string, Record<(typeof TrackType)[number], ITrack>>>>
   disabled?: boolean
 }) => {
-  const name = song.split('-').slice(0, -1).join('-').replaceAll('(Official Video)', '').replaceAll(' - Official Video', '')
-  const artist = name.split('\\').pop()?.split('-').slice(-1)[0] || name.split('-').slice(-1)[0]
-  const title = name.split('\\').pop()?.split('-').slice(0, -1).join('-') || name.split('-').slice(0, -1).join('-')
+  const {artist, title} = extractName(song)
   const [position, setPosition] = useState(0)
   const [duration, setDuration] = useState(0)
   const [soloed, setSoloed] = useState<string | false>(false)
-  // console.log(tracksObject)
-  const [mutedTracks, setMutedTracks] = useState({
-    drums: false,
-    bass: false,
-    instrumental: false,
-    vocals: false,
-    other: false,
-    master: false
-  })
-  const [volumes, setVolumes] = useState({
-    drums: 50,
-    bass: 50,
-    instrumental: 50,
-    vocals: 50,
-    other: 50,
-    master: 50
-  })
+  const [mutedTracks, setMutedTracks] = useState(mutedTracksDefault)
+  const [volumes, setVolumes] = useState(volumesDefault)
+
   const stopAllTracks = useCallback(() => {
     Object.values(tracksObject).forEach((trackSet) => {
       Object.values(trackSet).forEach((track) => {
@@ -90,14 +74,7 @@ const Song = ({
 
   useEffect(() => {
     if (soloed === false) {
-      setMutedTracks({
-        drums: false,
-        bass: false,
-        instrumental: false,
-        vocals: false,
-        other: false,
-        master: false
-      })
+      setMutedTracks(mutedTracksDefault)
     } else {
       setMutedTracks({
         drums: soloed !== 'drums',

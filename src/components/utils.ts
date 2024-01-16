@@ -60,3 +60,28 @@ export function throttle(func: any, delay: number) {
     return func(...args)
   }
 }
+
+export const extractName = (song: string) => {
+  const name = song.split('-').slice(0, -1).join('-').replaceAll('(Official Video)', '').replaceAll(' - Official Video', '')
+  const artist = name.split('\\').pop()?.split('-').slice(-1)[0] || name.split('-').slice(-1)[0]
+  const title = name.split('\\').pop()?.split('-').slice(0, -1).join('-') || name.split('-').slice(0, -1).join('-')
+  return { artist, title }
+}
+
+export const mutedTracksDefault = {
+  drums: false,
+  bass: false,
+  instrumental: false,
+  vocals: false,
+  other: false,
+  master: false
+}
+
+export const volumesDefault = {
+  drums: 50,
+  bass: 50,
+  instrumental: 50,
+  vocals: 50,
+  other: 50,
+  master: 50
+}
