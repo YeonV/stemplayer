@@ -110,11 +110,11 @@ export default function App() {
                   : theSong
               const song = songb.constructor.name === 'Array' ? songb.slice(-2)[1] : songb
               // const song = !!window?.electronAPI ? theSongb : theSongb
-              console.log('isElectron', !!window?.electronAPI)
-              console.log('constructor:', songb.constructor.name)
-              console.log('SONGB:', songb)
+              // console.log('isElectron', !!window?.electronAPI)
+              // console.log('constructor:', songb.constructor.name)
+              // console.log('SONGB:', songb)
               const t = parsedPath.name.includes('\\') ? parsedPath.name.split('\\').pop() : parsedPath.name.split('/').pop()
-              console.log('Stem:', t)
+              // console.log('Stem:', t)
               let audio: any
               const existingAudio = tracksObject[song]?.[t as (typeof TrackType)[number]]?.audio
               if (existingAudio) {
@@ -155,7 +155,7 @@ export default function App() {
 
   const onFileChange = (e: any) => {
     if (e.target.files) {
-      console.log(e.target.files)
+      // console.log(e.target.files)
       if (e.target.files.constructor.name == 'Array') {
         if (e.target.files.length === 0) return
         handleFiles(e.target.files, false, null)
@@ -202,11 +202,11 @@ export default function App() {
       handleFiles([fileObj], false, yzdir, true)
     })
     window.electronAPI.on('stemrollerDetected', (event: any, arg: any) => {
-      console.log(arg)
+      // console.log(arg)
       setDetected(true)
     })
     window.electronAPI.on('got-stemroller', (event: any, arg: any) => {
-      console.log(arg)
+      // console.log(arg)
       if (arg) setDetected(true)
     })
     setTimeout(() => {
@@ -215,7 +215,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    console.log(detected)
+    // console.log(detected)
     if (detected) setDetectedDialogOpen(true)
   }, [detected])
 
