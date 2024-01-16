@@ -17,7 +17,6 @@ declare global {
 }
 export default function App() {
   const inputRef = useRef<HTMLInputElement>(null)
-  // const [trackPaths, setTrackPaths] = useState<string[]>([])
   const [tracksObject, setTracksObject] = useState<Record<string, Record<(typeof TrackType)[number], ITrack>>>({})
   const tracksObjectRef = useRef(tracksObject)
   const [expanded, setExpanded] = useState<string | false>(false)
@@ -32,7 +31,6 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false)
   const songsImported = useRef(0)
   const songsTotal = useRef(0)
-
   let timer = null as any
 
   function logDone() {
@@ -58,19 +56,18 @@ export default function App() {
     }, 2000 + (message?.length || 0) * 60)
   }
 
-  const handleFiles = async (files: any, web?: boolean, yzdir?: any) => {
+  const handleFiles = async (files: any, drop?: boolean, yzdir?: any, protocol?: boolean) => {
     setIsLoading(true)
     if (files.length === 0) {
       setIsLoading(false)
       return
     }
 
-    const promises = files.map(
+    const promises = (files.constructor.name == 'Array' ? files : Object.values(files)).map(
       (file: any) =>
         new Promise((resolve, reject) => {
           const reader = new FileReader()
           reader.onload = function (eb: any) {
-            // setTracksObject((o) => {
             if (file.webkitRelativePath && file.webkitRelativePath !== '') {
               const [base, song, type] = file.webkitRelativePath.split('/')
               const t = type.split('.')[0] as (typeof TrackType)[number]
@@ -82,7 +79,7 @@ export default function App() {
                 audio = new Audio(eb.target.result)
               }
               audio.volume = 0.5
-              tracksObjectRef.current = {
+              const output = {
                 ...tracksObjectRef.current,
                 [song]: {
                   ...(tracksObjectRef.current[song] || []),
@@ -92,11 +89,30 @@ export default function App() {
                   }
                 }
               }
+              tracksObjectRef.current = output
             } else {
               const filePath = file.path !== '' ? file.path : file.name
               const parsedPath = path.parse(filePath)
-              const song = (parsedPath.dir || yzdir).includes('\\') ? (parsedPath.dir || yzdir).split('\\').pop() : (parsedPath.dir || yzdir).split('/').pop()
+              const theSong = (parsedPath.dir || yzdir || parsedPath.name).includes('\\')
+                ? (parsedPath.dir || yzdir || parsedPath.name).split('\\')
+                : (parsedPath.dir || yzdir || parsedPath.name).split('/').pop()
+              const songb =
+                drop && !window?.electronAPI
+                  ? theSong
+                  : drop && window?.electronAPI
+                  ? protocol
+                    ? theSong.includes('\\')
+                      ? theSong.split('\\').pop().slice(-2)[0]
+                      : theSong.split('/').pop().slice(-2)[0]
+                    : theSong.slice(-2)[0]
+                  : theSong
+              const song = songb.constructor.name === 'Array' ? songb.slice(-2)[1] : songb
+              // const song = !!window?.electronAPI ? theSongb : theSongb
+              console.log('isElectron', !!window?.electronAPI)
+              console.log('SONG:', song)
+              console.log('SONGB:', songb)
               const t = parsedPath.name.includes('\\') ? parsedPath.name.split('\\').pop() : parsedPath.name.split('/').pop()
+              console.log('Stem:', t)
               let audio: any
               const existingAudio = tracksObject[song]?.[t as (typeof TrackType)[number]]?.audio
               if (existingAudio) {
@@ -131,13 +147,20 @@ export default function App() {
     } catch (error) {
       console.error('Error reading files:', error)
     } finally {
-      if (Object.keys(tracksObjectRef.current).length === songsTotal.current) logDone()
+      logDone()
     }
   }
 
   const onFileChange = (e: any) => {
     if (e.target.files) {
-      handleFiles(e.target.files, true)
+      console.log(e.target.files)
+      if (e.target.files.constructor.name == 'Array') {
+        if (e.target.files.length === 0) return
+        handleFiles(e.target.files, false, null)
+      } else {
+        if (Object.values(e.target.files).length === 0) return
+        handleFiles(Object.values(e.target.files), false, null)
+      }
     }
   }
 
@@ -158,7 +181,7 @@ export default function App() {
   }, [tracksObject, played])
 
   useEffect(() => {
-    if (!window.electronAPI) return
+    if (!window?.electronAPI) return
     window.electronAPI.on('songs', (event: any, arg: any) => {
       const { currentIndex, total } = arg
 
@@ -174,7 +197,7 @@ export default function App() {
       const { file, content, yzdir } = data
       const blob = new Blob([new Uint8Array(content)], { type: 'audio/mpeg' })
       const fileObj = new File([blob], path.basename(file), { type: 'audio/mpeg' })
-      handleFiles([fileObj], false, yzdir)
+      handleFiles([fileObj], false, yzdir, true)
     })
     window.electronAPI.on('stemrollerDetected', () => {
       setDetectedDialogOpen(true)

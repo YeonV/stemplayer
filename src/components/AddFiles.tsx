@@ -10,11 +10,11 @@ export default function AddFiles({
 }: {
   inputRef: RefObject<HTMLInputElement>
   onFileChange: (e: any) => void
-  handleFiles: (e: any) => void
+  handleFiles: (files: any, drop?: boolean, yzdir?: any) => void
 }) {
   const theme = useTheme()
   const onDrop = useCallback((acceptedFiles: any) => {
-    handleFiles(acceptedFiles)
+    handleFiles(acceptedFiles, true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
