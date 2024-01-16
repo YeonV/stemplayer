@@ -104,7 +104,7 @@ export default function App() {
                     ? theSong.includes('\\')
                       ? theSong.split('\\').pop().slice(-2)[0]
                       : theSong.split('/').pop().slice(-2)[0]
-                    : theSong.slice(-2)[0]
+                    : theSong
                   : theSong
               const song = songb.constructor.name === 'Array' ? songb.slice(-2)[1] : songb
               // const song = !!window?.electronAPI ? theSongb : theSongb
