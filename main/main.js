@@ -1,3 +1,4 @@
+const os = require('os')
 const { app, BrowserWindow, protocol, ipcMain } = require('electron')
 const serve = require('electron-serve')
 const fs = require('fs')
@@ -55,6 +56,7 @@ const createWindow = () => {
         }, 500)
         setTimeout(() => {
           win.webContents.send('stemrollerDetected', musicDir)
+          win.webContents.send('os', os.platform())
         }, 1500)
       } else {
         console.log('Music directory does not exist')

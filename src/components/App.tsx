@@ -209,6 +209,10 @@ export default function App() {
       // console.log(arg)
       if (arg) setDetected(true)
     })
+    window.electronAPI.on('os', (event: any, arg: any) => {
+      console.log('OS:', arg)
+    })
+
     setTimeout(() => {
       window.electronAPI.send('get-stemroller')
     }, 1000)
