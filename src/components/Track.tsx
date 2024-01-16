@@ -27,13 +27,6 @@ const Track = ({
   setVolume: React.Dispatch<React.SetStateAction<number>>
 }) => {
   const theme = useTheme()
-  // const [volume, setVolume] = useState(50)
-
-  // const handleVolChange = (event: any, newValue: number | number[]) => {
-  //   const newVolume = newValue as number
-  //   setVolume(newVolume)
-  //   track.audio.volume = newVolume / 100
-  // }
   const handleVolChange = (event: any, newValue: number | number[]) => {
     const newVolume = newValue as number
     setVolume(newVolume)
@@ -59,21 +52,6 @@ const Track = ({
   return (
     <Stack direction={'row'} justifyContent={'space-between'} marginBottom={1}>
       <Stack direction={'row'} alignItems={'center'} spacing={0.5} sx={{ color: '#999' }}>
-        {/* <Button
-          disabled={disabled}
-          variant={mutedTracks[trackType] ? 'contained' : 'outlined'}
-          color={mutedTracks[trackType] ? 'error' : 'inherit'}
-          onClick={() => {
-            setMutedTracks((prevMutedTracks) => ({
-              ...prevMutedTracks,
-              [trackType]: !prevMutedTracks[trackType]
-            }))
-          }}
-          sx={{ p: 0, minWidth: 40 }}
-        >
-          {mutedTracks[trackType] ? <VolumeOff /> : <VolumeUp />}
-        </Button>
-         */}
         <Button
           disabled={disabled}
           variant={mutedTracks[trackType] ? 'contained' : 'outlined'}
@@ -95,6 +73,7 @@ const Track = ({
                 [trackType]: !prevMutedTracks[trackType]
               }))
             }
+            setSoloed(false)
           }}
           sx={{ p: 0, minWidth: trackType !== 'master' ? 40 : 85 }}
         >

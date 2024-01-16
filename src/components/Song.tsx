@@ -83,42 +83,6 @@ const Song = ({
     setPlayed((p) => p + 1)
   }, [stopAllTracks, tracksObject, song, setPlayed])
 
-  // const playSong = async () => {
-  //   stopAllTracks()
-  //   const trackTypes = Object.keys(tracksObject[song])
-  //   for (const type of trackTypes) {
-  //     const track = tracksObject[song][type as (typeof TrackType)[number]]
-  //     if (!track.audio) {
-  //       const audio = new Audio(track.path)
-  //       audio.volume = 0.5
-  //       audio.addEventListener('ended', stopAllTracks)
-  //       audio.addEventListener(
-  //         'timeupdate',
-  //         throttle(() => {
-  //           setPosition(audio.currentTime)
-  //         }, 1000)
-  //       )
-  //       setTracksObject((o) => {
-  //         return {
-  //           ...o,
-  //           [song]: {
-  //             ...(o[song] || []),
-  //             [type]: {
-  //               ...track,
-  //               audio: audio
-  //             }
-  //           }
-  //         }
-  //       })
-  //       setDuration(audio.duration)
-  //       audio.play()
-  //     } else {
-  //       track.audio.play()
-  //     }
-  //   }
-  //   setPlayed((p) => p + 1)
-  // }
-
   const handleButtonClick = (event: any) => {
     event.stopPropagation()
     isPlaying[song] ? stopAllTracks() : playSong()
@@ -209,7 +173,7 @@ const Song = ({
             disabled={!isPlaying[song]}
             tracksObject={tracksObject}
             key='master'
-            track={{ audio: new Audio() }} // Dummy track for the master control
+            track={{ audio: new Audio() }}
             trackType='master'
             soloed={soloed}
             setSoloed={setSoloed}

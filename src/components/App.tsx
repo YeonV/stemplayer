@@ -1,5 +1,5 @@
-import { use, useEffect, useRef, useState } from 'react'
-import { Box, Button, CircularProgress, LinearProgress } from '@mui/material'
+import { useEffect, useRef, useState } from 'react'
+import { Box, Button } from '@mui/material'
 import { ITrack, TrackType } from '@/components/utils'
 import AddFiles from './AddFiles'
 import Song from './Song'
@@ -109,12 +109,7 @@ export default function App() {
                     : theSong
                   : theSong
               const song = songb.constructor.name === 'Array' ? songb.slice(-2)[1] : songb
-              // const song = !!window?.electronAPI ? theSongb : theSongb
-              // console.log('isElectron', !!window?.electronAPI)
-              // console.log('constructor:', songb.constructor.name)
-              // console.log('SONGB:', songb)
               const t = parsedPath.name.includes('\\') ? parsedPath.name.split('\\').pop() : parsedPath.name.split('/').pop()
-              // console.log('Stem:', t)
               let audio: any
               const existingAudio = tracksObject[song]?.[t as (typeof TrackType)[number]]?.audio
               if (existingAudio) {
@@ -135,7 +130,6 @@ export default function App() {
               }
               tracksObjectRef.current = output
             }
-            // })
             resolve(true)
             setTracksObject(tracksObjectRef.current)
           }
@@ -155,7 +149,6 @@ export default function App() {
 
   const onFileChange = (e: any) => {
     if (e.target.files) {
-      // console.log(e.target.files)
       if (e.target.files.constructor.name == 'Array') {
         if (e.target.files.length === 0) return
         handleFiles(e.target.files, false, null)
@@ -186,8 +179,6 @@ export default function App() {
     if (!window?.electronAPI) return
     window.electronAPI.on('songs', (event: any, arg: any) => {
       const { currentIndex, total } = arg
-
-      // console.log(currentIndex + 1 + '/' + total + ' songs imported', 'info')
       showMessage('Importing ' + (currentIndex + 1) + ' songs...', 'info')
       songsImported.current = currentIndex + 1
       songsTotal.current = total
@@ -202,11 +193,9 @@ export default function App() {
       handleFiles([fileObj], false, yzdir, true)
     })
     window.electronAPI.on('stemrollerDetected', (event: any, arg: any) => {
-      // console.log(arg)
       setDetected(true)
     })
     window.electronAPI.on('got-stemroller', (event: any, arg: any) => {
-      // console.log(arg)
       if (arg) setDetected(true)
     })
     window.electronAPI.on('os', (event: any, arg: any) => {
@@ -219,7 +208,6 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    // console.log(detected)
     if (detected) setDetectedDialogOpen(true)
   }, [detected])
 
@@ -235,9 +223,7 @@ export default function App() {
           marginBottom: Object.keys(tracksObject).length > 3 ? '1rem' : '3rem'
         }}
       />
-
       <AddFiles inputRef={inputRef} handleFiles={handleFiles} onFileChange={onFileChange} />
-
       <Box>
         {Object.entries(tracksObject).map(([song, tracks]) => (
           <Song
