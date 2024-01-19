@@ -34,6 +34,7 @@ export default function App() {
   let timer = null as any
 
   function logDone() {
+    // console.log('log')
     if (timer) {
       clearTimeout(timer)
     }
@@ -41,6 +42,7 @@ export default function App() {
     timer = setTimeout(() => {
       setIsLoading(false)
       timer = null
+      // console.log('log done')
     }, 1000)
   }
 
@@ -211,8 +213,10 @@ export default function App() {
     if (detected) setDetectedDialogOpen(true)
   }, [detected])
 
+  console.log('render', isProd, process.env.NODE_ENV, process.env.PROD_ENV)
+
   return (
-    <Box alignItems={'center'} display={'flex'} flexDirection={'column'}>
+    <Box alignItems={'center'} display={'flex'} flexDirection={'column'} color={'#fff'}>
       <Image
         priority
         src={(isProd ? '/stemplayer' : '') + '/banner.png'}
